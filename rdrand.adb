@@ -23,11 +23,11 @@ package body rdrand is
       r : Unsigned_64;
    begin
       Asm (Template => ".rd_start:"         & NL &
-                           "rdrand %0"      & NL &
+                           "rdrand %%rax"      & NL &
                            "jc .rd_end"     & NL &
                            "loop .rd_start" & NL &
                        ".rd_end:",
-           Outputs  => (Unsigned_64'Asm_Output ("=r", r)),
+           Outputs  => (Unsigned_64'Asm_Output ("=a", r)),
            Inputs   => (Unsigned_64'Asm_Input ("c", RC)));
       return r;
    end Rand64;
