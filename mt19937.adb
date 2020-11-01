@@ -83,7 +83,7 @@ package body MT19937 is
       x : constant Unsigned_32 := xadd32p (M (I).que'Access);
       t : aliased sys.timespec;
    begin
-      t.tv_nsec := Unsigned_64 (((THN * DIM - x) + 1) * NS);
+      t.tv_nsec := Unsigned_64 (((THN * DIM) - x) * NS);
       loop
          sys.nanosleep (t'Access);
          exit when (load32if8 (M (I).que'Access, M (I).mtf'Access) = x);

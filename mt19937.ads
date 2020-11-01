@@ -37,7 +37,7 @@ is
    THN      : constant := 32;
    MM       : constant := 156 * ADT;
    NN       : constant := 312 * ADT;
-   NS       : constant := 100_000;
+   NS       : constant := 40_000;
    UM       : constant Unsigned_64 := 16#FFFF_FFFF_8000_0000#; -- Most significant 33 bits
    LM       : constant Unsigned_64 := 16#7FFF_FFFF#;           -- Least significant 31 bits
    IM       : constant Unsigned_64 := 16#5851_F42D_4C95_7F2D#;
