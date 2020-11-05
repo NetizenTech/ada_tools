@@ -37,7 +37,7 @@ is
    THN      : constant := 32;
    MM       : constant := 156 * ADT;
    NN       : constant := 312 * ADT;
-   NS       : constant := 40_000;
+   US       : constant := 40 * ADT;
    UM       : constant Unsigned_64 := 16#FFFF_FFFF_8000_0000#; -- Most significant 33 bits
    LM       : constant Unsigned_64 := 16#7FFF_FFFF#;           -- Least significant 31 bits
    IM       : constant Unsigned_64 := 16#5851_F42D_4C95_7F2D#;
@@ -87,7 +87,6 @@ private
    type Matrix is limited record
       mt   : aliased mt_array;             -- The array for the state vector
       mti  : aliased Atomic_32 := NN + 1;  -- mti==NN+1 means mt[NN] is not initialized
-      que  : aliased Atomic_32;            -- queue
       mtf  : aliased Atomic_8 := 1;        -- activity clue
       seed : Unsigned_64 := SD;            -- initial value
    end record;
@@ -95,12 +94,15 @@ private
    type mtx_array is array (UTHN) of aliased Matrix;
 
    -- initializes mt[NN] with a seed
-   procedure init_genrand64 (M : access mt_array; S : in Unsigned_64);
+   function init_genrand64 (MX : access mtx_array; J : in UTHN) return Unsigned_64;
 
    -- generate NN words at one time
-   procedure up_genrand64 (M : access mt_array);
+   function up_genrand64 (MX : access mtx_array; J : in UTHN) return Unsigned_64;
 
-   -- far jump -> LIFO
-   function queue_genrand64 (M : access mtx_array; I : in UTHN) return Unsigned_64;
+   -- suspend execution for microsecond intervals
+   procedure usleep (usec : in Unsigned_32) with
+      Import,
+      Convention    => C,
+      External_Name => "usleep";
 
 end MT19937;

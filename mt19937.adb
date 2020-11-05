@@ -26,21 +26,25 @@
 pragma Ada_2020;
 
 with MTavx; use MTavx;
-with sys;
 
 package body MT19937 is
 
    -- initializes mt[NN] with a seed
-   procedure init_genrand64 (M : access mt_array; S : in Unsigned_64) is
+   function init_genrand64 (MX : access mtx_array; J : in UTHN) return Unsigned_64 is
+      M : constant access mt_array := MX (J).mt'Access;
    begin
-      M (0) := S;
+      M (0) := MX (J).seed;
+
       for i in UNN range 1 .. NN - 1 loop
          M (i) := (IM * (M (i - 1) xor Shift_Right (M (i - 1), 62)) + Unsigned_64 (i));
       end loop;
+
+      return up_genrand64 (MX, J);
    end init_genrand64;
 
    -- generate NN words at one time
-   procedure up_genrand64 (M : access mt_array) is
+   function up_genrand64 (MX : access mtx_array; J : in UTHN) return Unsigned_64 is
+      M : constant access mt_array := MX (J).mt'Access;
       x : Unsigned_64;
    begin
       for i in UNN range 0 .. NN - MM - 1 loop
@@ -55,6 +59,10 @@ package body MT19937 is
 
       x          := (M (NN - 1) and UM) or (M (0) and LM);
       M (NN - 1) := M (MM - 1) xor Shift_Right (x, 1) xor MATRIX_A (x and 1);
+
+      store8 (MX (J).mtf'Access);
+      store32 (MX (J).mti'Access);
+      return genrand64 (M (0));
    end up_genrand64;
 
    -- generates a random number on [0, 2^64-1]-interval
@@ -65,31 +73,14 @@ package body MT19937 is
          when 1 .. NN - 1 =>
             return genrand64 (M (I).mt (UNN (x)));
          when NN =>
-            if not (cmpxchg8 (M (I).mtf'Access)) then return queue_genrand64 (M, I); end if;
+            if (cmpxchg8 (M (I).mtf'Access)) then return up_genrand64 (M, I); end if;
          when NN + 1 =>
-            if not (cmpxchg8 (M (I).mtf'Access)) then return queue_genrand64 (M, I); end if;
-            init_genrand64 (M (I).mt'Access, M (I).seed);
+            if (cmpxchg8 (M (I).mtf'Access)) then return init_genrand64 (M, I); end if;
          when others =>
-            return queue_genrand64 (M, I);
+            null;
       end case;
-      up_genrand64 (M (I).mt'Access);
-      store8 (M (I).mtf'Access);
-      store32 (M (I).mti'Access);
-      return genrand64 (M (I).mt (0));
+      usleep ((NN - (x mod NN)) * US);
+      return 0;
    end genrand64;
-
-   -- far jump -> LIFO
-   function queue_genrand64 (M : access mtx_array; I : in UTHN) return Unsigned_64 is
-      x : constant Unsigned_32 := xadd32p (M (I).que'Access);
-      t : aliased sys.timespec;
-   begin
-      t.tv_nsec := Unsigned_64 (((THN * DIM) - x) * NS);
-      loop
-         sys.nanosleep (t'Access);
-         exit when (load32if8 (M (I).que'Access, M (I).mtf'Access) = x);
-      end loop;
-      dec32 (M (I).que'Access);
-      return genrand64 (M, I);
-   end queue_genrand64;
 
 end MT19937;
