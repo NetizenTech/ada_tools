@@ -37,7 +37,6 @@ is
    THN      : constant := 32;
    MM       : constant := 156 * ADT;
    NN       : constant := 312 * ADT;
-   US       : constant := 40 * ADT;
    UM       : constant Unsigned_64 := 16#FFFF_FFFF_8000_0000#; -- Most significant 33 bits
    LM       : constant Unsigned_64 := 16#7FFF_FFFF#;           -- Least significant 31 bits
    IM       : constant Unsigned_64 := 16#5851_F42D_4C95_7F2D#;
@@ -47,17 +46,7 @@ is
    -- atomic's
    function xadd32 is new xadd_32 (1);
 
-   function xadd32p is new xadd_32p (1);
-
-   procedure dec32 is new dec_32;
-
    procedure store32 is new store_32 (1);
-
-   function load32if8 is new load_32if8 (1);
-
-   function cmpxchg8 is new cmpxchg_8 (1, 0);
-
-   procedure store8 is new store_8 (1);
 
    type UNN is mod NN + 2 with
       Size          => 32,
@@ -87,7 +76,6 @@ private
    type Matrix is limited record
       mt   : aliased mt_array;             -- The array for the state vector
       mti  : aliased Atomic_32 := NN + 1;  -- mti==NN+1 means mt[NN] is not initialized
-      mtf  : aliased Atomic_8 := 1;        -- activity clue
       seed : Unsigned_64 := SD;            -- initial value
    end record;
 
@@ -98,11 +86,5 @@ private
 
    -- generate NN words at one time
    function up_genrand64 (MX : access mtx_array; J : in UTHN) return Unsigned_64;
-
-   -- suspend execution for microsecond intervals
-   procedure usleep (usec : in Unsigned_32) with
-      Import,
-      Convention    => C,
-      External_Name => "usleep";
 
 end MT19937;

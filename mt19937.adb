@@ -60,7 +60,6 @@ package body MT19937 is
       x          := (M (NN - 1) and UM) or (M (0) and LM);
       M (NN - 1) := M (MM - 1) xor Shift_Right (x, 1) xor MATRIX_A (x and 1);
 
-      store8 (MX (J).mtf'Access);
       store32 (MX (J).mti'Access);
       return genrand64 (M (0));
    end up_genrand64;
@@ -73,14 +72,12 @@ package body MT19937 is
          when 1 .. NN - 1 =>
             return genrand64 (M (I).mt (UNN (x)));
          when NN =>
-            if (cmpxchg8 (M (I).mtf'Access)) then return up_genrand64 (M, I); end if;
+            return up_genrand64 (M, I);
          when NN + 1 =>
-            if (cmpxchg8 (M (I).mtf'Access)) then return init_genrand64 (M, I); end if;
+            return init_genrand64 (M, I);
          when others =>
-            null;
+            return 0;
       end case;
-      usleep ((NN - (x mod NN)) * US);
-      return 0;
    end genrand64;
 
 end MT19937;
