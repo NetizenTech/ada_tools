@@ -20,6 +20,8 @@ package pthread with
    No_Elaboration_Code_All,
    Pure
 is
+   PTHREAD_ONCE_INIT             : constant := 0;  --  /usr/include/pthread.h:182
+   PTHREAD_BARRIER_SERIAL_THREAD : constant := -1;  --  /usr/include/pthread.h:189
 
    type anon1032_array1034 is array (0 .. 55) of aliased Unsigned_8;
    type pthread_attr_t (discr : Unsigned_32 := 0) is record
@@ -134,34 +136,8 @@ is
         Convention    => C,
         External_Name => "pthread_attr_destroy";
 
-   -- Thread identifiers.  The structure of the attribute type is not exposed on purpose.
-   type pthread_t is new Unsigned_64;  -- /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:27
-
    -- Once-only execution
    type pthread_once_t is new Integer;  -- /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:53
-
-   -- Functions for handling initialization.
-   -- Create a new thread, starting with execution of START-ROUTINE
-   --   getting passed ARG.  Creation attributed come from ATTR.  The new
-   --   handle is stored in *NEWTHREAD.
-   function pthread_create
-     (uu_newthread     : access pthread_t;
-      uu_attr          : access constant pthread_attr_t;
-      uu_start_routine : access function (arg : System.Address) return System.Address;
-      uu_arg           : in System.Address) return Integer  -- /usr/include/pthread.h:198
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_create";
-
-   -- Make calling thread wait for termination of the thread TH.  The
-   --   exit status of the thread is stored in *THREAD_RETURN, if THREAD_RETURN
-   --   is not NULL.
-   function pthread_join
-     (uu_th            : in pthread_t;
-      uu_thread_return : in System.Address) return Integer  -- /usr/include/pthread.h:215
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_join";
 
    -- Guarantee that the initialization function INIT_ROUTINE will be called
    --   only once, even if pthread_once is executed several times with the
@@ -174,6 +150,42 @@ is
         Convention    => C,
         External_Name => "pthread_once";
 
+   -- Thread identifiers.  The structure of the attribute type is not exposed on purpose.
+   type pthread_t is new Unsigned_64;  -- /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:27
+
+   -- Functions for handling initialization.
+   -- Create a new thread, starting with execution of START-ROUTINE
+   --   getting passed ARG.  Creation attributed come from ATTR.  The new
+   --   handle is stored in *NEWTHREAD.
+   function pthread_create
+     (uu_newthread     : access pthread_t;
+      uu_attr          : access constant pthread_attr_t := null;
+      uu_start_routine : access function (arg : System.Address) return System.Address;
+      uu_arg           : in System.Address := System.Null_Address) return Integer  -- /usr/include/pthread.h:198
+   with Import,
+        Convention    => C,
+        External_Name => "pthread_create";
+
+   -- ''
+   function pthread_create
+     (uu_newthread     : access pthread_t;
+      uu_attr          : access constant pthread_attr_t := null;
+      uu_start_routine : access procedure;
+      uu_arg           : in System.Address := System.Null_Address) return Integer  -- /usr/include/pthread.h:198
+   with Import,
+        Convention    => C,
+        External_Name => "pthread_create";
+
+   -- Make calling thread wait for termination of the thread TH.  The
+   --   exit status of the thread is stored in *THREAD_RETURN, if THREAD_RETURN
+   --   is not NULL.
+   function pthread_join
+     (uu_th            : in pthread_t;
+      uu_thread_return : in System.Address := System.Null_Address) return Integer  -- /usr/include/pthread.h:215
+   with Import,
+        Convention    => C,
+        External_Name => "pthread_join";
+
    -- Indicate that the thread TH is never to be joined with PTHREAD_JOIN.
    --   The resources of TH will therefore be freed immediately when it
    --   terminates, instead of waiting for another thread to perform PTHREAD_JOIN
@@ -184,18 +196,17 @@ is
         Convention    => C,
         External_Name => "pthread_detach";
 
-   -- Cancel THREAD immediately or at the next possibility.
-   function pthread_cancel
-     (uu_th : in pthread_t) return Integer  -- /usr/include/pthread.h:489
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_cancel";
-
    -- Yield the processor to another thread or process.
    --   This function is similar to the POSIX `sched_yield' function but
    --   might be differently implemented in the case of a m-on-n thread
    --   implementation.
    function pthread_yield return Integer  -- /usr/include/pthread.h:445
+   with Import,
+        Convention    => C,
+        External_Name => "pthread_yield";
+
+   -- ''
+   procedure pthread_yield  -- /usr/include/pthread.h:445
    with Import,
         Convention    => C,
         External_Name => "pthread_yield";
@@ -208,7 +219,7 @@ is
 
    -- Terminate calling thread.
    procedure pthread_exit
-     (uu_retval : in System.Address)  -- /usr/include/pthread.h:207
+     (uu_retval : in System.Address := System.Null_Address)  -- /usr/include/pthread.h:207
    with Import,
         Convention    => C,
         External_Name => "pthread_exit";
