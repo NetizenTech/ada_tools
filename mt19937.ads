@@ -27,6 +27,8 @@ pragma Ada_2020;
 
 with Atomic;     use Atomic;
 with Interfaces; use Interfaces;
+with pthread;       use pthread;
+with pthread_mutex; use pthread_mutex;
 
 package MT19937 with
    No_Elaboration_Code_All,
@@ -34,9 +36,10 @@ package MT19937 with
 is
    DIM      : constant := 1;
    ADT      : constant := 1;
-   THN      : constant := 32;
+   THN      : constant := 32 * DIM;
    MM       : constant := 156 * ADT;
    NN       : constant := 312 * ADT;
+   NI       : constant := 100_001;
    UM       : constant Unsigned_64 := 16#FFFF_FFFF_8000_0000#; -- Most significant 33 bits
    LM       : constant Unsigned_64 := 16#7FFF_FFFF#;           -- Least significant 31 bits
    IM       : constant Unsigned_64 := 16#5851_F42D_4C95_7F2D#;
@@ -48,17 +51,28 @@ is
 
    procedure store32 is new store_32 (1);
 
-   type UNN is mod NN + 2 with
-      Size          => 32,
-      Default_Value => NN + 1;
+   procedure reset is new store_32 (NI);
 
-   type UTHN is mod THN * DIM with
+   type UNN is mod NN + 1 with
       Size          => 32,
       Default_Value => 0;
 
-   type Matrix is limited private;
+   type UTHN is mod THN with
+      Size          => 32,
+      Default_Value => 0;
 
-   type mtx_array is limited private;
+   type mt_array is array (UNN range 0 .. NN - 1) of Unsigned_64 with
+      Default_Component_Value => 0;
+
+   type Matrix is limited record
+      mt   : aliased mt_array;             -- The array for the state vector
+      mti  : aliased Atomic_32 := NI;      -- mti==NI means mt[NN] is not initialized
+      seed : aliased Unsigned_64 := SD;    -- initial value
+      mtx  : aliased pthread_mutex_t;
+      once : aliased pthread_once_t := 0;
+   end record;
+
+   type mtx_array is array (UTHN) of aliased Matrix;
 
    type mtx_switch is limited record
       IDX : aliased Atomic_32;
@@ -70,21 +84,13 @@ is
 
 private
 
-   type mt_array is array (UNN range 0 .. NN - 1) of Unsigned_64 with
-      Default_Component_Value => 0;
-
-   type Matrix is limited record
-      mt   : aliased mt_array;             -- The array for the state vector
-      mti  : aliased Atomic_32 := NN + 1;  -- mti==NN+1 means mt[NN] is not initialized
-      seed : Unsigned_64 := SD;            -- initial value
-   end record;
-
-   type mtx_array is array (UTHN) of aliased Matrix;
-
    -- initializes mt[NN] with a seed
    function init_genrand64 (MX : access mtx_array; J : in UTHN) return Unsigned_64;
 
    -- generate NN words at one time
    function up_genrand64 (MX : access mtx_array; J : in UTHN) return Unsigned_64;
+
+   -- assert for pthread func
+   procedure assert (r : in Integer);
 
 end MT19937;
