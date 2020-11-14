@@ -11,24 +11,12 @@
 -- USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 pragma Ada_2020;
 
-with Interfaces; use Interfaces;
-
 package sys with
    No_Elaboration_Code_All,
    Pure
 is
-   NR_write     : constant Unsigned_64 := 1;
-   NR_nanosleep : constant Unsigned_64 := 35;
-   NR_exit      : constant Unsigned_64 := 60;
-
-   type timespec is record
-      tv_sec  : Unsigned_64 := 0;
-      tv_nsec : Unsigned_64 := 0;
-   end record;
 
    procedure write (x : in String);
-
-   procedure nanosleep (t : access constant timespec);
 
    procedure exit0 (s : in Integer := 0);
 

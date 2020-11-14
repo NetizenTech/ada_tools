@@ -1,6 +1,6 @@
 -- Ada-program for MT19937-64. Coded by Wojciech Lawren.
 
--- This is MP 64-bit version of Mersenne Twister pseudorandom number generator.
+-- This is MT 64-bit version of Mersenne Twister pseudorandom number generator.
 
 -- Copyright (C) 2020, Wojciech Lawren, All rights reserved.
 
@@ -32,19 +32,7 @@ package body MT19937 is
    -- initializes mt[NN] with a seed
    function init_genrand64 (MX : access mtx_array; J : in UTHN) return Unsigned_64 is
       M : constant access mt_array := MX (J).mt'Access;
-
-      procedure mtx_init with Convention => C;
-
-      procedure mtx_init is
-         mxt : aliased pthread_mutexattr_t;
-      begin
-         assert ( pthread_mutexattr_init (mxt'Access) );
-         assert ( pthread_mutexattr_settype (mxt'Access, 1) );
-         assert ( pthread_mutex_init (MX (J).mtx'Access, mxt'Access) );
-      end mtx_init;
    begin
-      assert ( pthread_once (MX (J).once'Access, mtx_init'Access) );
-
       M (0) := MX (J).seed;
 
       for i in UNN range 1 .. NN - 1 loop
@@ -91,9 +79,5 @@ package body MT19937 is
             return 0;
       end case;
    end genrand64;
-
-   -- assert for pthread func
-   procedure assert (r : in Integer) is
-   begin if r /= 0 then pthread_exit; end if; end assert;
 
 end MT19937;

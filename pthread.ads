@@ -20,135 +20,110 @@ package pthread with
    No_Elaboration_Code_All,
    Pure
 is
-   PTHREAD_ONCE_INIT             : constant := 0;  --  /usr/include/pthread.h:182
-   PTHREAD_BARRIER_SERIAL_THREAD : constant := -1;  --  /usr/include/pthread.h:189
+   -- Definitions of constants scheduling interface.
+   SCHED_OTHER    : constant := 0;  --  /usr/include/x86_64-linux-gnu/bits/sched.h:28
+   SCHED_FIFO     : constant := 1;  --  /usr/include/x86_64-linux-gnu/bits/sched.h:29
+   SCHED_RR       : constant := 2;  --  /usr/include/x86_64-linux-gnu/bits/sched.h:30
 
-   type anon1032_array1034 is array (0 .. 55) of aliased Unsigned_8;
+   -- Detach state.
+   PTHREAD_CREATE_JOINABLE : constant := 0;
+   PTHREAD_CREATE_DETACHED : constant := 1;
+
+   -- Size definition for CPU sets.
+   CPU_SETSIZE : constant := 1_024;  -- /usr/include/x86_64-linux-gnu/bits/cpu-set.h
+
+   -- Data structure of thread attribute *ATTR
+   type anon1032_array1034 is array (0 .. 55) of aliased Unsigned_8 with
+      Default_Component_Value => 0;
    type pthread_attr_t (discr : Unsigned_32 := 0) is record
       case discr is
          when 0 =>
-            uu_size  : aliased anon1032_array1034;  -- /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:58
+            size  : aliased anon1032_array1034;  -- /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:58
          when others =>
-            uu_align : aliased Long_Integer;  -- /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:59
+            align : aliased Long_Integer;  -- /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:59
       end case;
    end record
    with Unchecked_Union;  -- /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:56
 
+   -- Linux provides 99 realtime priority levels, numbered 1 (lowest) to 99 (highest).
+   subtype Sched_Prio is Integer range 1 .. 99;
+
    -- Data structure to describe a process' schedulability.
    type sched_param is record
-      sched_priority : aliased Integer;  -- /usr/include/x86_64-linux-gnu/bits/types/struct_sched_param.h:25
+      sched_priority : aliased Sched_Prio;  -- /usr/include/x86_64-linux-gnu/bits/types/struct_sched_param.h:25
    end record;  -- /usr/include/x86_64-linux-gnu/bits/types/struct_sched_param.h:23
+
+   -- Size definition for CPU sets.
+   -- Type for array elements in 'cpu_set_t'.
+   type cpu_mask is new Unsigned_64;  -- /usr/include/x86_64-linux-gnu/bits/cpu-set.h:32
+
+   -- Data structure to describe CPU mask.
+   type cpu_set_t_array876 is array (0 .. ((CPU_SETSIZE / cpu_mask'Size) - 1)) of aliased cpu_mask with
+      Default_Component_Value => 0;
+   type cpu_set_t is record
+      bits : aliased cpu_set_t_array876;  -- /usr/include/x86_64-linux-gnu/bits/cpu-set.h:41
+   end record;  -- /usr/include/x86_64-linux-gnu/bits/cpu-set.h:42
 
    -- Thread attribute handling.
    -- Initialize thread attribute *ATTR with default attributes
    --   (detachstate is PTHREAD_JOINABLE, scheduling policy is SCHED_OTHER,
    --    no user-provided stack).
    function pthread_attr_init
-     (uu_attr : access pthread_attr_t) return Integer  -- /usr/include/pthread.h:263
+     (attr : access pthread_attr_t) return Integer  -- /usr/include/pthread.h:263
    with Import,
         Convention    => C,
         External_Name => "pthread_attr_init";
-
-   -- Get the default attributes used by pthread_create in this process.
-   function pthread_getattr_default_np
-     (uu_attr : access pthread_attr_t) return Integer  -- /usr/include/pthread.h:385
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_getattr_default_np";
-
-   -- Set the default attributes to be used by pthread_create in this process.
-   function pthread_setattr_default_np
-     (uu_attr : access constant pthread_attr_t) return Integer  -- /usr/include/pthread.h:390
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_setattr_default_np";
-
-   -- Return the currently used minimal stack size.
-   function pthread_attr_getstacksize
-     (uu_attr      : access constant pthread_attr_t;
-      uu_stacksize : access Unsigned_64) return Integer  -- /usr/include/pthread.h:344
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_attr_getstacksize";
 
    -- Add information about the minimum stack size needed for the thread
    --   to be started.  This size must never be less than PTHREAD_STACK_MIN
    --   and must also not exceed the system limits.
    function pthread_attr_setstacksize
-     (uu_attr      : access pthread_attr_t;
-      uu_stacksize : in Unsigned_64) return Integer  -- /usr/include/pthread.h:351
+     (attr      : access pthread_attr_t;
+      stacksize : in Unsigned_64) return Integer  -- /usr/include/pthread.h:351
    with Import,
         Convention    => C,
         External_Name => "pthread_attr_setstacksize";
 
-   -- Return in *PARAM the scheduling parameters of *ATTR.
-   function pthread_attr_getschedparam
-     (uu_attr  : access constant pthread_attr_t;
-      uu_param : access sched_param) return Integer  -- /usr/include/pthread.h:292
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_attr_getschedparam";
-
-   -- Set scheduling parameters (priority, etc) in *ATTR according to PARAM.
-   function pthread_attr_setschedparam
-     (uu_attr  : access pthread_attr_t;
-      uu_param : access constant sched_param) return Integer  -- /usr/include/pthread.h:297
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_attr_setschedparam";
-
-   -- Return in *POLICY the scheduling policy of *ATTR.
-   function pthread_attr_getschedpolicy
-     (uu_attr   : access constant pthread_attr_t;
-      uu_policy : access Integer) return Integer  -- /usr/include/pthread.h:302
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_attr_getschedpolicy";
-
    -- Set scheduling policy in *ATTR according to POLICY.
    function pthread_attr_setschedpolicy
-     (uu_attr   : access pthread_attr_t;
-      uu_policy : in Integer) return Integer  -- /usr/include/pthread.h:307
+     (attr   : access pthread_attr_t;
+      policy : in Integer) return Integer  -- /usr/include/pthread.h:307
    with Import,
         Convention    => C,
         External_Name => "pthread_attr_setschedpolicy";
 
-   -- Get detach state attribute.
-   function pthread_attr_getdetachstate
-     (uu_attr        : access constant pthread_attr_t;
-      uu_detachstate : access Integer) return Integer  -- /usr/include/pthread.h:270
+   -- Set scheduling parameters (priority, etc) in *ATTR according to PARAM.
+   function pthread_attr_setschedparam
+     (attr  : access pthread_attr_t;
+      param : access constant sched_param) return Integer  -- /usr/include/pthread.h:297
    with Import,
         Convention    => C,
-        External_Name => "pthread_attr_getdetachstate";
+        External_Name => "pthread_attr_setschedparam";
+
+   -- Thread created with attribute ATTR will be limited to run only on
+   --   the processors represented in CPUSET.
+   function pthread_attr_setaffinity_np
+     (attr       : access pthread_attr_t;
+      cpusetsize : in Unsigned_64 := (cpu_set_t'Size / 8);
+      cpuset     : access constant cpu_set_t) return Integer  -- /usr/include/pthread.h:372
+   with Import,
+        Convention    => C,
+        External_Name => "pthread_attr_setaffinity_np";
 
    -- Set detach state attribute.
    function pthread_attr_setdetachstate
-     (uu_attr        : access pthread_attr_t;
-      uu_detachstate : in Integer) return Integer  -- /usr/include/pthread.h:275
+     (attr        : access pthread_attr_t;
+      detachstate : in Integer) return Integer  -- /usr/include/pthread.h:275
    with Import,
         Convention    => C,
         External_Name => "pthread_attr_setdetachstate";
 
-   -- Destroy thread attribute *ATTR.
-   function pthread_attr_destroy
-     (uu_attr : access pthread_attr_t) return Integer  -- /usr/include/pthread.h:266
+   -- Set the default attributes to be used by pthread_create in this process.
+   function pthread_setattr_default_np
+     (attr : access constant pthread_attr_t) return Integer  -- /usr/include/pthread.h:390
    with Import,
         Convention    => C,
-        External_Name => "pthread_attr_destroy";
-
-   -- Once-only execution
-   type pthread_once_t is new Integer;  -- /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:53
-
-   -- Guarantee that the initialization function INIT_ROUTINE will be called
-   --   only once, even if pthread_once is executed several times with the
-   --   same ONCE_CONTROL argument. ONCE_CONTROL must point to a static or
-   --   extern variable initialized to PTHREAD_ONCE_INIT.
-   function pthread_once
-     (uu_once_control : access pthread_once_t;
-      uu_init_routine : access procedure) return Integer  -- /usr/include/pthread.h:470
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_once";
+        External_Name => "pthread_setattr_default_np";
 
    -- Thread identifiers.  The structure of the attribute type is not exposed on purpose.
    type pthread_t is new Unsigned_64;  -- /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:27
@@ -158,20 +133,20 @@ is
    --   getting passed ARG.  Creation attributed come from ATTR.  The new
    --   handle is stored in *NEWTHREAD.
    function pthread_create
-     (uu_newthread     : access pthread_t;
-      uu_attr          : access constant pthread_attr_t := null;
-      uu_start_routine : access function (arg : System.Address) return System.Address;
-      uu_arg           : in System.Address := System.Null_Address) return Integer  -- /usr/include/pthread.h:198
+     (newthread     : access pthread_t;
+      attr          : access constant pthread_attr_t := null;
+      start_routine : access function (arg : System.Address) return System.Address;
+      arg           : in System.Address := System.Null_Address) return Integer  -- /usr/include/pthread.h:198
    with Import,
         Convention    => C,
         External_Name => "pthread_create";
 
    -- ''
    function pthread_create
-     (uu_newthread     : access pthread_t;
-      uu_attr          : access constant pthread_attr_t := null;
-      uu_start_routine : access procedure;
-      uu_arg           : in System.Address := System.Null_Address) return Integer  -- /usr/include/pthread.h:198
+     (newthread     : access pthread_t;
+      attr          : access constant pthread_attr_t := null;
+      start_routine : access procedure;
+      arg           : in System.Address := System.Null_Address) return Integer  -- /usr/include/pthread.h:198
    with Import,
         Convention    => C,
         External_Name => "pthread_create";
@@ -180,18 +155,28 @@ is
    --   exit status of the thread is stored in *THREAD_RETURN, if THREAD_RETURN
    --   is not NULL.
    function pthread_join
-     (uu_th            : in pthread_t;
-      uu_thread_return : in System.Address := System.Null_Address) return Integer  -- /usr/include/pthread.h:215
+     (th            : in pthread_t;
+      thread_return : in System.Address := System.Null_Address) return Integer  -- /usr/include/pthread.h:215
    with Import,
         Convention    => C,
         External_Name => "pthread_join";
+
+   -- Limit specified thread TH to run only on the processors represented
+   --   in CPUSET.
+   function pthread_setaffinity_np
+     (th         : in pthread_t;
+      cpusetsize : in Unsigned_64 := (cpu_set_t'Size / 8);
+      cpuset     : access constant cpu_set_t) return Integer -- /usr/include/pthread.h:450
+   with Import,
+        Convention    => C,
+        External_Name => "pthread_setaffinity_np";
 
    -- Indicate that the thread TH is never to be joined with PTHREAD_JOIN.
    --   The resources of TH will therefore be freed immediately when it
    --   terminates, instead of waiting for another thread to perform PTHREAD_JOIN
    --   on it.
    function pthread_detach
-     (uu_th : in pthread_t) return Integer  -- /usr/include/pthread.h:247
+     (th : in pthread_t) return Integer  -- /usr/include/pthread.h:247
    with Import,
         Convention    => C,
         External_Name => "pthread_detach";
@@ -219,7 +204,7 @@ is
 
    -- Terminate calling thread.
    procedure pthread_exit
-     (uu_retval : in System.Address := System.Null_Address)  -- /usr/include/pthread.h:207
+     (retval : in System.Address := System.Null_Address)  -- /usr/include/pthread.h:207
    with Import,
         Convention    => C,
         External_Name => "pthread_exit";

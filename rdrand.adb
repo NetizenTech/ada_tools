@@ -15,20 +15,13 @@ with System.Machine_Code; use System.Machine_Code;
 
 package body rdrand is
 
-   NL : constant String := ASCII.LF & ASCII.HT;
-   RC : constant := 2;
-
    -- hardware-generated random value
    function rand64 return Unsigned_64 is
       r : Unsigned_64;
    begin
-      Asm (Template => ".rd_start:"         & NL &
-                           "rdrand %%rax"      & NL &
-                           "jc .rd_end"     & NL &
-                           "loop .rd_start" & NL &
-                       ".rd_end:",
+      Asm (Template => "rdrand %%rax",
            Outputs  => (Unsigned_64'Asm_Output ("=a", r)),
-           Inputs   => (Unsigned_64'Asm_Input ("c", RC)));
+           Volatile => True);
       return r;
    end Rand64;
 

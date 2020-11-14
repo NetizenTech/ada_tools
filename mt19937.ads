@@ -1,6 +1,6 @@
 -- Ada-program for MT19937-64. Coded by Wojciech Lawren.
 
--- This is MP 64-bit version of Mersenne Twister pseudorandom number generator.
+-- This is MT 64-bit version of Mersenne Twister pseudorandom number generator.
 
 -- Copyright (C) 2020, Wojciech Lawren, All rights reserved.
 
@@ -25,9 +25,8 @@
 -- Any feedback is very welcome.
 pragma Ada_2020;
 
-with Atomic;     use Atomic;
-with Interfaces; use Interfaces;
-with pthread;       use pthread;
+with Atomic;        use Atomic;
+with Interfaces;    use Interfaces;
 with pthread_mutex; use pthread_mutex;
 
 package MT19937 with
@@ -36,10 +35,10 @@ package MT19937 with
 is
    DIM      : constant := 1;
    ADT      : constant := 1;
-   THN      : constant := 32 * DIM;
+   THN      : constant := 32  * DIM;
    MM       : constant := 156 * ADT;
    NN       : constant := 312 * ADT;
-   NI       : constant := 100_001;
+   NI       : constant := 16#186A1#;
    UM       : constant Unsigned_64 := 16#FFFF_FFFF_8000_0000#; -- Most significant 33 bits
    LM       : constant Unsigned_64 := 16#7FFF_FFFF#;           -- Least significant 31 bits
    IM       : constant Unsigned_64 := 16#5851_F42D_4C95_7F2D#;
@@ -68,15 +67,14 @@ is
       mt   : aliased mt_array;             -- The array for the state vector
       mti  : aliased Atomic_32 := NI;      -- mti==NI means mt[NN] is not initialized
       seed : aliased Unsigned_64 := SD;    -- initial value
-      mtx  : aliased pthread_mutex_t;
-      once : aliased pthread_once_t := 0;
+      mtx  : aliased pthread_mutex_t;      -- PTHREAD_MUTEX_RECURSIVE
    end record;
 
    type mtx_array is array (UTHN) of aliased Matrix;
 
    type mtx_switch is limited record
-      IDX : aliased Atomic_32;
-      MTX : aliased mtx_array;
+      idx : aliased Atomic_32;
+      mtx : aliased mtx_array;
    end record;
 
    -- generates a random number on [0, 2^64-1]-interval
@@ -89,8 +87,5 @@ private
 
    -- generate NN words at one time
    function up_genrand64 (MX : access mtx_array; J : in UTHN) return Unsigned_64;
-
-   -- assert for pthread func
-   procedure assert (r : in Integer);
 
 end MT19937;

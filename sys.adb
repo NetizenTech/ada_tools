@@ -19,30 +19,27 @@ package body sys is
    NL : constant String := ASCII.LF & ASCII.HT;
 
    procedure write (x : in String) is
+      NR_write : constant := 1;
+      fd       : constant := 1;
    begin
-      Asm (Template => "movq %1, %%rdx"                   & NL &
-                       "movq $1, %%rdi"                   & NL &
-                       "movq sys__nr_write(%%rip), %%rax" & NL &
+      Asm (Template => "movl %1, %%edx" & NL &
+                       "movl %2, %%edi" & NL &
+                       "movl %3, %%eax" & NL &
                        "syscall",
            Inputs   => (System.Address'Asm_Input ("S", x'Address),
-                        Unsigned_64'Asm_Input ("r", Unsigned_64 (x'Length))),
+                        Integer'Asm_Input ("r", x'Length),
+                        Integer'Asm_Input ("n", fd),
+                        Integer'Asm_Input ("n", NR_write)),
            Volatile => True);
    end write;
 
-   procedure nanosleep (t : access constant timespec) is
-   begin
-      Asm (Template => "xorq %%rsi, %%rsi"                    & NL &
-                       "movq sys__nr_nanosleep(%%rip), %%rax" & NL &
-                       "syscall",
-           Inputs   => (System.Address'Asm_Input ("D", t.all'Address)),
-           Volatile => True);
-   end nanosleep;
-
    procedure exit0 (s : in Integer := 0) is
+      NR_exit : constant := 60;
    begin
-      Asm (Template => "movq sys__nr_exit(%%rip), %%rax" & NL &
+      Asm (Template => "movl %1, %%eax" & NL &
                        "syscall",
-           Inputs   => (Integer'Asm_Input ("D", s)),
+           Inputs   => (Integer'Asm_Input ("D", s),
+                        Integer'Asm_Input ("n", NR_exit)),
            Volatile => True);
    end exit0;
 

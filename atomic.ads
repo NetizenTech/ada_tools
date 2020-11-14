@@ -54,7 +54,7 @@ is
    generic
       cmp  : Unsigned_8;
       xchg : Unsigned_8;
-   function cmpxchg_8 (ptr : access Atomic_8) return Boolean with
+   function cmpxchg_8 (ptr : access Atomic_8) return Unsigned_8 with
       Inline_Always;
 
    generic

@@ -64,12 +64,11 @@ package body Atomic is
       return 0;
    end load_32if8;
 
-   function cmpxchg_8 (ptr : access Atomic_8) return Boolean is
-      x : Boolean;
+   function cmpxchg_8 (ptr : access Atomic_8) return Unsigned_8 is
+      x : Unsigned_8;
    begin
-      Asm (Template => "lock cmpxchgb %2, (%3)" & NL &
-                       "sete %0",
-           Outputs  => (Boolean'Asm_Output ("=r", x)),
+      Asm (Template => "lock cmpxchgb %2, (%3)",
+           Outputs  => (Unsigned_8'Asm_Output ("=a", x)),
            Inputs   => (Unsigned_8'Asm_Input ("a", cmp),
                         Unsigned_8'Asm_Input ("r", xchg),
                         System.Address'Asm_Input ("r", ptr.all'Address)));
