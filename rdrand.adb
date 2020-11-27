@@ -1,4 +1,4 @@
--- Ada-program for random 64-bit hardware-generated value. Coded by Wojciech Lawren.
+-- Ada-program for random 64-bit hardware-generated value x86_64. Coded by Wojciech Lawren.
 
 -- Copyright (C) 2020, Wojciech Lawren, All rights reserved.
 
@@ -17,10 +17,10 @@ package body rdrand is
 
    -- hardware-generated random value
    function rand64 return Unsigned_64 is
-      r : Unsigned_64;
+      r : Unsigned_64 := 0;
    begin
-      Asm (Template => "rdrand %%rax",
-           Outputs  => (Unsigned_64'Asm_Output ("=a", r)),
+      Asm (Template => "rdrand %0",
+           Outputs  => (Unsigned_64'Asm_Output ("=r", r)),
            Volatile => True);
       return r;
    end Rand64;

@@ -9,6 +9,26 @@
 -- SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 -- WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 -- USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+-- References:
+--    April 2020 AMD64 Architecture Programmer's Manual
+
+-- all memory values are initialized to zero:
+
+-- 1.
+-- Processor 0             Processor 1
+-- Store A <- 1            Store B <- 1
+-- Load B                  Load A
+
+-- All combinations of values (00, 01, 10, and 11) may be observed by Processors 0 and 1
+
+-- 2.
+-- Processor 0             Processor 1
+-- Store A <- 1            Store B <- 1
+-- MFENCE                  MFENCE
+-- Load B                  Load A
+
+-- Load A and Load B cannot both read 0
 pragma Ada_2020;
 
 with Interfaces; use Interfaces;

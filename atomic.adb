@@ -9,6 +9,26 @@
 -- SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 -- WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 -- USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+-- References:
+--    April 2020 AMD64 Architecture Programmer's Manual
+
+-- all memory values are initialized to zero:
+
+-- 1.
+-- Processor 0             Processor 1
+-- Store A <- 1            Store B <- 1
+-- Load B                  Load A
+
+-- All combinations of values (00, 01, 10, and 11) may be observed by Processors 0 and 1
+
+-- 2.
+-- Processor 0             Processor 1
+-- Store A <- 1            Store B <- 1
+-- MFENCE                  MFENCE
+-- Load B                  Load A
+
+-- Load A and Load B cannot both read 0
 pragma Ada_2020;
 
 with System;
@@ -21,10 +41,12 @@ package body Atomic is
    function xadd_32 (ptr : access Atomic_32) return Unsigned_32 is
       x : Unsigned_32;
    begin
-      Asm (Template => "lock xaddl %%eax, (%2)",
-           Outputs  => (Unsigned_32'Asm_Output ("=a", x)),
-           Inputs   => (Unsigned_32'Asm_Input ("a", val),
-                        System.Address'Asm_Input ("r", ptr.all'Address)));
+      Asm (Template => "lock xaddl %1, (%2)" & NL &
+                       "movl %1, %0",
+           Outputs  => (Unsigned_32'Asm_Output ("=r", x)),
+           Inputs   => (Unsigned_32'Asm_Input ("r", val),
+                        System.Address'Asm_Input ("r", ptr.all'Address)),
+           Volatile => True);
       return x;
    end xadd_32;
 
@@ -59,7 +81,8 @@ package body Atomic is
            Outputs  => (Unsigned_32'Asm_Output ("=r", x),
                         Unsigned_8'Asm_Output ("=r", y)),
            Inputs   => (System.Address'Asm_Input ("r", ptr.all'Address),
-                        System.Address'Asm_Input ("r", p8.all'Address)));
+                        System.Address'Asm_Input ("r", p8.all'Address)),
+           Volatile => True);
       if y = val then return x; end if;
       return 0;
    end load_32if8;
@@ -67,11 +90,15 @@ package body Atomic is
    function cmpxchg_8 (ptr : access Atomic_8) return Unsigned_8 is
       x : Unsigned_8;
    begin
-      Asm (Template => "lock cmpxchgb %2, (%3)",
-           Outputs  => (Unsigned_8'Asm_Output ("=a", x)),
-           Inputs   => (Unsigned_8'Asm_Input ("a", cmp),
-                        Unsigned_8'Asm_Input ("r", xchg),
-                        System.Address'Asm_Input ("r", ptr.all'Address)));
+      Asm (Template => "movb %1, %%al"            & NL &
+                       "movb %2, %%dl"            & NL &
+                       "lock cmpxchgb %%dl, (%3)" & NL &
+                       "movb %%al, %0",
+           Outputs  => (Unsigned_8'Asm_Output ("=r", x)),
+           Inputs   => (Unsigned_8'Asm_Input ("n", cmp),
+                        Unsigned_8'Asm_Input ("n", xchg),
+                        System.Address'Asm_Input ("r", ptr.all'Address)),
+           Volatile => True);
       return x;
    end cmpxchg_8;
 

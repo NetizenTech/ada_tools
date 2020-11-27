@@ -1,4 +1,4 @@
--- Ada-program for xor128 (64-bit). Coded by Wojciech Lawren.
+-- Ada-program for xor128 (64-bit) x86_64. Coded by Wojciech Lawren.
 
 -- Copyright (C) 2020, Wojciech Lawren, All rights reserved.
 
@@ -20,7 +20,7 @@ package body xor128avx2 is
 
    -- Algorithm "xor128" from p. 5 Marsaglia, "Xorshift RNGs"
    function xrand64 (x : access xs256s) return Unsigned_64 is
-      r : Unsigned_64;
+      r : Unsigned_64 := 0;
    begin
       Asm (Template => "vzeroall"                               & NL &
                        "prefetcht0 (%1)"                        & NL &
@@ -41,8 +41,8 @@ package body xor128avx2 is
                        "vpinsrq $1, %%rax, %%xmm3, %%xmm3"      & NL &
                        "vinserti128 $0, %%xmm3, %%ymm1, %%ymm1" & NL &
                        "vmovdqu %%ymm1, (%1)"                   & NL &
-                       "vpextrq $0, %%xmm1, %0",
-           Outputs  => (Unsigned_64'Asm_Output ("=r", r)),
+                       "vpextrq $0, %%xmm1, %%rax",
+           Outputs  => (Unsigned_64'Asm_Output ("=a", r)),
            Inputs   => (System.Address'Asm_Input ("r", x.all'Address)));
       return r;
    end xrand64;

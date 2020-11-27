@@ -1,4 +1,4 @@
--- Ada-program for MT19937-64. Coded by Wojciech Lawren.
+-- Ada-program for MT19937-64 x86_64. Coded by Wojciech Lawren.
 
 -- Copyright (C) 2020, Wojciech Lawren, All rights reserved.
 
@@ -28,7 +28,7 @@ package body MTavx is
    NL : constant String := ASCII.LF & ASCII.HT;
 
    function genrand64 (x : in Unsigned_64) return Unsigned_64 is
-      r : Unsigned_64;
+      r : Unsigned_64 := 0;
    begin
       Asm (Template => "vzeroall"                                     & NL &
                        "vpinsrq $0, mtavx__h1(%%rip), %%xmm2, %%xmm2" & NL &
@@ -46,8 +46,8 @@ package body MTavx is
                        "vpxor %%xmm2, %%xmm0, %%xmm0"                 & NL &
                        "vpsrlq $43, %%xmm0, %%xmm1"                   & NL &
                        "vpxor %%xmm0, %%xmm1, %%xmm0"                 & NL &
-                       "vpextrq $0, %%xmm0, %0",
-           Outputs  => (Unsigned_64'Asm_Output ("=r", r)),
+                       "vpextrq $0, %%xmm0, %%rax",
+           Outputs  => (Unsigned_64'Asm_Output ("=a", r)),
            Inputs   => (Unsigned_64'Asm_Input ("r", x)));
       return r;
    end genrand64;

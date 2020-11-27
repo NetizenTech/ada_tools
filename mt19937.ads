@@ -35,7 +35,7 @@ package MT19937 with
 is
    DIM      : constant := 1;
    ADT      : constant := 1;
-   THN      : constant := 32  * DIM;
+   THN      : constant := 128 * DIM;
    MM       : constant := 156 * ADT;
    NN       : constant := 312 * ADT;
    NI       : constant := 16#186A1#;

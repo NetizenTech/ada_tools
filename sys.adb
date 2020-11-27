@@ -22,11 +22,12 @@ package body sys is
       NR_write : constant := 1;
       fd       : constant := 1;
    begin
-      Asm (Template => "movl %1, %%edx" & NL &
+      Asm (Template => "movq %0, %%rsi" & NL &
+                       "movl %1, %%edx" & NL &
                        "movl %2, %%edi" & NL &
                        "movl %3, %%eax" & NL &
                        "syscall",
-           Inputs   => (System.Address'Asm_Input ("S", x'Address),
+           Inputs   => (System.Address'Asm_Input ("r", x'Address),
                         Integer'Asm_Input ("r", x'Length),
                         Integer'Asm_Input ("n", fd),
                         Integer'Asm_Input ("n", NR_write)),
@@ -36,9 +37,10 @@ package body sys is
    procedure exit0 (s : in Integer := 0) is
       NR_exit : constant := 60;
    begin
-      Asm (Template => "movl %1, %%eax" & NL &
+      Asm (Template => "movl %0, %%edi" & NL &
+                       "movl %1, %%eax" & NL &
                        "syscall",
-           Inputs   => (Integer'Asm_Input ("D", s),
+           Inputs   => (Integer'Asm_Input ("r", s),
                         Integer'Asm_Input ("n", NR_exit)),
            Volatile => True);
    end exit0;
