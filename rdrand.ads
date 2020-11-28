@@ -18,7 +18,6 @@ package rdrand with
    Pure
 is
    -- hardware-generated random value -> RDRAND instruction = true
-   function rand64 return Unsigned_64 with
-      Inline_Always;
+   function rand64 return Unsigned_64;
 
 end rdrand;

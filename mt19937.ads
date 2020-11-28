@@ -25,9 +25,9 @@
 -- Any feedback is very welcome.
 pragma Ada_2020;
 
-with Atomic;        use Atomic;
-with Interfaces;    use Interfaces;
-with pthread_mutex; use pthread_mutex;
+with Atomic;     use Atomic;
+with Interfaces; use Interfaces;
+with sys;
 
 package MT19937 with
    No_Elaboration_Code_All,
@@ -45,13 +45,6 @@ is
    SD       : constant Unsigned_64 := 16#153D#;
    MATRIX_A : constant array (Unsigned_64 range 0 .. 1) of Unsigned_64 := (16#0#, 16#B502_6F5A_A966_19E9#);
 
-   -- atomic's
-   function xadd32 is new xadd_32 (1);
-
-   procedure store32 is new store_32 (1);
-
-   procedure reset is new store_32 (NI);
-
    type UNN is mod NN + 1 with
       Size          => 32,
       Default_Value => 0;
@@ -67,7 +60,7 @@ is
       mt   : aliased mt_array;             -- The array for the state vector
       mti  : aliased Atomic_32 := NI;      -- mti==NI means mt[NN] is not initialized
       seed : aliased Unsigned_64 := SD;    -- initial value
-      mtx  : aliased pthread_mutex_t;      -- PTHREAD_MUTEX_RECURSIVE
+      ftx  : aliased sys.futex_t;          -- futex
    end record;
 
    type mtx_array is array (UTHN) of aliased Matrix;

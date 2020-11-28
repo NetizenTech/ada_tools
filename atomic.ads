@@ -47,39 +47,20 @@ is
       Default_Value => 0,
       Atomic;
 
-   generic
-      val : Unsigned_32;
-   function xadd_32 (ptr : access Atomic_32) return Unsigned_32 with
-      Inline_Always;
+   function xadd_32 (ptr : access Atomic_32; val : in Unsigned_32) return Unsigned_32;
 
-   generic
-      val : Unsigned_32;
-   function xadd_32p (ptr : access Atomic_32) return Unsigned_32 with
-      Inline_Always;
+   function xadd_32p (ptr : access Atomic_32; val : in Unsigned_32) return Unsigned_32;
 
-   generic
-   procedure dec_32 (ptr : access Atomic_32) with
-      Inline_Always;
+   procedure dec_32 (ptr : access Atomic_32);
 
-   generic
-      val : Unsigned_32;
-   procedure store_32 (ptr : access Atomic_32) with
-      Inline_Always;
+   procedure store_32 (ptr : access Atomic_32; val : in Unsigned_32);
 
-   generic
-      val : Unsigned_8;
-   function load_32if8 (ptr : access Atomic_32; p8 : access Atomic_8) return Unsigned_32 with
-      Inline_Always;
+   function cmpxchg_32 (ptr : access Atomic_32; xchg : in Unsigned_32; cmp : in Unsigned_32) return Unsigned_32;
 
-   generic
-      cmp  : Unsigned_8;
-      xchg : Unsigned_8;
-   function cmpxchg_8 (ptr : access Atomic_8) return Unsigned_8 with
-      Inline_Always;
+   function load_32if8 (ptr : access Atomic_32; p8 : access Atomic_8; val : in Unsigned_8) return Unsigned_32;
 
-   generic
-      val : Unsigned_8;
-   procedure store_8 (ptr : access Atomic_8) with
-      Inline_Always;
+   function cmpxchg_8 (ptr : access Atomic_8; xchg : in Unsigned_8; cmp : in Unsigned_8) return Unsigned_8;
+
+   procedure store_8 (ptr : access Atomic_8; val : in Unsigned_8);
 
 end Atomic;

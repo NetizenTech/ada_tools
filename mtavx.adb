@@ -46,8 +46,8 @@ package body MTavx is
                        "vpxor %%xmm2, %%xmm0, %%xmm0"                 & NL &
                        "vpsrlq $43, %%xmm0, %%xmm1"                   & NL &
                        "vpxor %%xmm0, %%xmm1, %%xmm0"                 & NL &
-                       "vpextrq $0, %%xmm0, %%rax",
-           Outputs  => (Unsigned_64'Asm_Output ("=a", r)),
+                       "vpextrq $0, %%xmm0, %0",
+           Outputs  => (Unsigned_64'Asm_Output ("=r", r)),
            Inputs   => (Unsigned_64'Asm_Input ("r", x)));
       return r;
    end genrand64;

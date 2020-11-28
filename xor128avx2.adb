@@ -41,8 +41,8 @@ package body xor128avx2 is
                        "vpinsrq $1, %%rax, %%xmm3, %%xmm3"      & NL &
                        "vinserti128 $0, %%xmm3, %%ymm1, %%ymm1" & NL &
                        "vmovdqu %%ymm1, (%1)"                   & NL &
-                       "vpextrq $0, %%xmm1, %%rax",
-           Outputs  => (Unsigned_64'Asm_Output ("=a", r)),
+                       "vpextrq $0, %%xmm1, %0",
+           Outputs  => (Unsigned_64'Asm_Output ("=r", r)),
            Inputs   => (System.Address'Asm_Input ("r", x.all'Address)));
       return r;
    end xrand64;

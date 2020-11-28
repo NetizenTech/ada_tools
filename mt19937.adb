@@ -60,13 +60,13 @@ package body MT19937 is
       x          := (M (NN - 1) and UM) or (M (0) and LM);
       M (NN - 1) := M (MM - 1) xor Shift_Right (x, 1) xor MATRIX_A (x and 1);
 
-      store32 (MX (J).mti'Access);
+      store_32 (MX (J).mti'Access, 1);
       return genrand64 (M (0));
    end up_genrand64;
 
    -- generates a random number on [0, 2^64-1]-interval
    function genrand64 (M : access mtx_array; I : in UTHN) return Unsigned_64 is
-      x : constant Unsigned_32 := xadd32 (M (I).mti'Access);
+      x : constant Unsigned_32 := xadd_32 (M (I).mti'Access, 1);
    begin
       case x is
          when 1 .. NN - 1 =>

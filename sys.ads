@@ -11,13 +11,28 @@
 -- USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 pragma Ada_2020;
 
+with Atomic;     use Atomic;
+with Interfaces; use Interfaces;
+
 package sys with
    No_Elaboration_Code_All,
    Pure
 is
+   FUTEX_WAIT : constant := 0;
+   FUTEX_WAKE : constant := 1;
+
+   type futex_t is record
+      f1 : aliased Atomic_32 := 1;
+   end record;
 
    procedure write (x : in String);
 
    procedure exit0 (s : in Integer := 0);
+
+   procedure futex (f : access Atomic_32; op : in Integer; val : in Unsigned_32);
+
+   procedure futex_lock (f : access futex_t);
+
+   procedure futex_unlock (f : access futex_t);
 
 end sys;

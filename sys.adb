@@ -45,4 +45,35 @@ package body sys is
            Volatile => True);
    end exit0;
 
+   procedure futex (f : access Atomic_32; op : in Integer; val : in Unsigned_32) is
+      NR_futex : constant := 202;
+   begin
+      Asm (Template => "xorq %%r10, %%r10" & NL &
+                       "movq %0, %%rdi"    & NL &
+                       "movl %1, %%esi"    & NL &
+                       "movl %2, %%edx"    & NL &
+                       "movl %3, %%eax"    & NL &
+                       "syscall",
+           Inputs   => (System.Address'Asm_Input ("r", f.all'Address),
+                        Integer'Asm_Input ("r", op),
+                        Unsigned_32'Asm_Input ("r", val),
+                        Integer'Asm_Input ("n", NR_futex)),
+           Volatile => True);
+   end futex;
+
+   procedure futex_lock (f : access futex_t) is
+   begin
+      loop
+         exit when cmpxchg_32 (f.f1'Access, 0, 1) = 1;
+         futex (f.f1'Access, FUTEX_WAIT, 0);
+      end loop;
+   end futex_lock;
+
+   procedure futex_unlock (f : access futex_t) is
+   begin
+      if cmpxchg_32 (f.f1'Access, 1, 0) = 0 then
+         futex (f.f1'Access, FUTEX_WAKE, 1);
+      end if;
+   end futex_unlock;
+
 end sys;

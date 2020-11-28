@@ -38,7 +38,7 @@ package body Atomic is
 
    NL : constant String := ASCII.LF & ASCII.HT;
 
-   function xadd_32 (ptr : access Atomic_32) return Unsigned_32 is
+   function xadd_32 (ptr : access Atomic_32; val : in Unsigned_32) return Unsigned_32 is
       x : Unsigned_32;
    begin
       Asm (Template => "lock xaddl %1, (%2)" & NL &
@@ -50,10 +50,9 @@ package body Atomic is
       return x;
    end xadd_32;
 
-   function xadd_32p (ptr : access Atomic_32) return Unsigned_32 is
-      function x is new xadd_32 (val);
+   function xadd_32p (ptr : access Atomic_32; val : in Unsigned_32) return Unsigned_32 is
    begin
-      return (x (ptr) + val);
+      return (xadd_32 (ptr, val) + val);
    end xadd_32p;
 
    procedure dec_32 (ptr : access Atomic_32) is
@@ -63,7 +62,7 @@ package body Atomic is
            Volatile => True);
    end dec_32;
 
-   procedure store_32 (ptr : access Atomic_32) is
+   procedure store_32 (ptr : access Atomic_32; val : in Unsigned_32) is
    begin
       Asm (Template => "lock xchgl (%1), %0",
            Inputs   => (Unsigned_32'Asm_Input ("r", val),
@@ -71,7 +70,21 @@ package body Atomic is
            Volatile => True);
    end store_32;
 
-   function load_32if8 (ptr : access Atomic_32; p8 : access Atomic_8) return Unsigned_32 is
+   function cmpxchg_32 (ptr : access Atomic_32; xchg : in Unsigned_32; cmp : in Unsigned_32) return Unsigned_32 is
+      x : Unsigned_32;
+   begin
+      Asm (Template => "movl %1, %%eax"         & NL &
+                       "lock cmpxchgl %2, (%3)" & NL &
+                       "movl %%eax, %0",
+           Outputs  => (Unsigned_32'Asm_Output ("=r", x)),
+           Inputs   => (Unsigned_32'Asm_Input ("r", cmp),
+                        Unsigned_32'Asm_Input ("r", xchg),
+                        System.Address'Asm_Input ("r", ptr.all'Address)),
+           Volatile => True);
+      return x;
+   end cmpxchg_32;
+
+   function load_32if8 (ptr : access Atomic_32; p8 : access Atomic_8; val : in Unsigned_8) return Unsigned_32 is
       x : Unsigned_32;
       y : Unsigned_8;
    begin
@@ -87,22 +100,21 @@ package body Atomic is
       return 0;
    end load_32if8;
 
-   function cmpxchg_8 (ptr : access Atomic_8) return Unsigned_8 is
+   function cmpxchg_8 (ptr : access Atomic_8; xchg : in Unsigned_8; cmp : in Unsigned_8) return Unsigned_8 is
       x : Unsigned_8;
    begin
-      Asm (Template => "movb %1, %%al"            & NL &
-                       "movb %2, %%dl"            & NL &
-                       "lock cmpxchgb %%dl, (%3)" & NL &
+      Asm (Template => "movb %1, %%al"          & NL &
+                       "lock cmpxchgb %2, (%3)" & NL &
                        "movb %%al, %0",
            Outputs  => (Unsigned_8'Asm_Output ("=r", x)),
-           Inputs   => (Unsigned_8'Asm_Input ("n", cmp),
-                        Unsigned_8'Asm_Input ("n", xchg),
+           Inputs   => (Unsigned_8'Asm_Input ("r", cmp),
+                        Unsigned_8'Asm_Input ("r", xchg),
                         System.Address'Asm_Input ("r", ptr.all'Address)),
            Volatile => True);
       return x;
    end cmpxchg_8;
 
-   procedure store_8 (ptr : access Atomic_8) is
+   procedure store_8 (ptr : access Atomic_8; val : in Unsigned_8) is
    begin
       Asm (Template => "lock xchgb (%1), %0",
            Inputs   => (Unsigned_8'Asm_Input ("r", val),
