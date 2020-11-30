@@ -25,6 +25,8 @@ is
       f1 : aliased Atomic_32 := 1;
    end record;
 
+   type pid_t is new Integer;
+
    procedure write (x : in String);
 
    procedure exit0 (s : in Integer := 0);
@@ -34,5 +36,13 @@ is
    procedure futex_lock (f : access futex_t);
 
    procedure futex_unlock (f : access futex_t);
+
+   procedure pause;
+
+   function getpid return pid_t;
+
+   function gettid return pid_t;
+
+   procedure tgkill (tgid : in pid_t; tid : in pid_t; sig : in Integer);
 
 end sys;
