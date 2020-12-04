@@ -71,9 +71,7 @@ is
    --    no user-provided stack).
    function pthread_attr_init
      (attr : access pthread_attr_t) return Integer  -- /usr/include/pthread.h:263
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_attr_init";
+   with Import;
 
    -- Add information about the minimum stack size needed for the thread
    --   to be started.  This size must never be less than PTHREAD_STACK_MIN
@@ -81,25 +79,19 @@ is
    function pthread_attr_setstacksize
      (attr      : access pthread_attr_t;
       stacksize : in Unsigned_64) return Integer  -- /usr/include/pthread.h:351
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_attr_setstacksize";
+   with Import;
 
    -- Set scheduling policy in *ATTR according to POLICY.
    function pthread_attr_setschedpolicy
      (attr   : access pthread_attr_t;
       policy : in Integer) return Integer  -- /usr/include/pthread.h:307
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_attr_setschedpolicy";
+   with Import;
 
    -- Set scheduling parameters (priority, etc) in *ATTR according to PARAM.
    function pthread_attr_setschedparam
      (attr  : access pthread_attr_t;
       param : access constant sched_param) return Integer  -- /usr/include/pthread.h:297
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_attr_setschedparam";
+   with Import;
 
    -- Thread created with attribute ATTR will be limited to run only on
    --   the processors represented in CPUSET.
@@ -107,24 +99,18 @@ is
      (attr       : access pthread_attr_t;
       cpusetsize : in Unsigned_64 := (cpu_set_t'Size / 8);
       cpuset     : access constant cpu_set_t) return Integer  -- /usr/include/pthread.h:372
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_attr_setaffinity_np";
+   with Import;
 
    -- Set detach state attribute.
    function pthread_attr_setdetachstate
      (attr        : access pthread_attr_t;
       detachstate : in Integer) return Integer  -- /usr/include/pthread.h:275
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_attr_setdetachstate";
+   with Import;
 
    -- Set the default attributes to be used by pthread_create in this process.
    function pthread_setattr_default_np
      (attr : access constant pthread_attr_t) return Integer  -- /usr/include/pthread.h:390
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_setattr_default_np";
+   with Import;
 
    -- Thread identifiers.  The structure of the attribute type is not exposed on purpose.
    type pthread_t is new Unsigned_64;  -- /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:27
@@ -134,80 +120,50 @@ is
    --   getting passed ARG.  Creation attributed come from ATTR.  The new
    --   handle is stored in *NEWTHREAD.
    function pthread_create
-     (newthread     : access pthread_t;
-      attr          : access constant pthread_attr_t := null;
-      start_routine : access function (arg : System.Address) return System.Address;
-      arg           : in System.Address := System.Null_Address) return Integer  -- /usr/include/pthread.h:198
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_create";
-
-   -- ''
-   function pthread_create
-     (newthread     : access pthread_t;
-      attr          : access constant pthread_attr_t := null;
-      start_routine : access procedure;
-      arg           : in System.Address := System.Null_Address) return Integer  -- /usr/include/pthread.h:198
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_create";
+     (thread : access pthread_t;
+      attr   : access constant pthread_attr_t := null;
+      start  : in System.Address;
+      arg    : in System.Address := System.Null_Address) return Integer  -- /usr/include/pthread.h:198
+   with Import;
 
    -- Make calling thread wait for termination of the thread TH.  The
    --   exit status of the thread is stored in *THREAD_RETURN, if THREAD_RETURN
    --   is not NULL.
    function pthread_join
-     (th            : in pthread_t;
-      thread_return : in System.Address := System.Null_Address) return Integer  -- /usr/include/pthread.h:215
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_join";
+     (thread : in pthread_t;
+      retval : in System.Address := System.Null_Address) return Integer  -- /usr/include/pthread.h:215
+   with Import;
 
    -- Limit specified thread TH to run only on the processors represented
    --   in CPUSET.
    function pthread_setaffinity_np
-     (th         : in pthread_t;
+     (thread     : in pthread_t;
       cpusetsize : in Unsigned_64 := (cpu_set_t'Size / 8);
       cpuset     : access constant cpu_set_t) return Integer -- /usr/include/pthread.h:450
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_setaffinity_np";
+   with Import;
 
    -- Indicate that the thread TH is never to be joined with PTHREAD_JOIN.
    --   The resources of TH will therefore be freed immediately when it
    --   terminates, instead of waiting for another thread to perform PTHREAD_JOIN
    --   on it.
    function pthread_detach
-     (th : in pthread_t) return Integer  -- /usr/include/pthread.h:247
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_detach";
+     (thread : in pthread_t) return Integer  -- /usr/include/pthread.h:247
+   with Import;
 
    -- Yield the processor to another thread or process.
    --   This function is similar to the POSIX `sched_yield' function but
    --   might be differently implemented in the case of a m-on-n thread
-   --   implementation.
-   function pthread_yield return Integer  -- /usr/include/pthread.h:445
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_yield";
-
-   -- ''
+   --   implementation. On Linux, this call always succeeds.
    procedure pthread_yield  -- /usr/include/pthread.h:445
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_yield";
+   with Import;
 
    -- Obtain the identifier of the current thread.
    function pthread_self return pthread_t  -- /usr/include/pthread.h:251
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_self";
+   with Import;
 
    -- Terminate calling thread.
    procedure pthread_exit
      (retval : in System.Address := System.Null_Address)  -- /usr/include/pthread.h:207
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_exit";
+   with Import;
 
 end pthread;

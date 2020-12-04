@@ -76,14 +76,14 @@ package body sys is
       end if;
    end futex_unlock;
 
-   procedure pause is
+   procedure pause34 is
       NR_pause : constant := 34;
    begin
       Asm (Template => "movl %0, %%eax" & NL &
                        "syscall",
            Inputs   => (Integer'Asm_Input ("n", NR_pause)),
            Volatile => True);
-   end pause;
+   end pause34;
 
    function getpid return pid_t is
       NR_getpid : constant := 39;
@@ -111,19 +111,23 @@ package body sys is
       return x;
    end gettid;
 
-   procedure tgkill (tgid : in pid_t; tid : in pid_t; sig : in Integer) is
+   function tgkill (tgid : in pid_t; tid : in pid_t; sig : in Integer) return Integer is
       NR_tgkill : constant := 234;
+      x : Integer;
    begin
-      Asm (Template => "movl %0, %%edi" & NL &
-                       "movl %1, %%esi" & NL &
-                       "movl %2, %%edx" & NL &
-                       "movl %3, %%eax" & NL &
-                       "syscall",
+      Asm (Template => "movl %1, %%edi" & NL &
+                       "movl %2, %%esi" & NL &
+                       "movl %3, %%edx" & NL &
+                       "movl %4, %%eax" & NL &
+                       "syscall"        & NL &
+                       "movl %%eax, %0",
+           Outputs  => (Integer'Asm_Output ("=r", x)),
            Inputs   => (pid_t'Asm_Input ("r", tgid),
                         pid_t'Asm_Input ("r", tid),
                         Integer'Asm_Input ("r", sig),
                         Integer'Asm_Input ("n", NR_tgkill)),
            Volatile => True);
+      return x;
    end tgkill;
 
 end sys;

@@ -63,15 +63,11 @@ is
    -- Lock a mutex.
    function pthread_mutex_lock
      (mutex : access pthread_mutex_t) return Integer  -- /usr/include/pthread.h:738
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_mutex_lock";
+   with Import;
 
    -- Unlock a mutex.
    function pthread_mutex_unlock
      (mutex : access pthread_mutex_t) return Integer  -- /usr/include/pthread.h:756
-   with Import,
-        Convention    => C,
-        External_Name => "pthread_mutex_unlock";
+   with Import;
 
 end pthread_mutex;

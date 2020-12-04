@@ -37,12 +37,12 @@ is
 
    procedure futex_unlock (f : access futex_t);
 
-   procedure pause;
+   procedure pause34;
 
    function getpid return pid_t;
 
    function gettid return pid_t;
 
-   procedure tgkill (tgid : in pid_t; tid : in pid_t; sig : in Integer);
+   function tgkill (tgid : in pid_t; tid : in pid_t; sig : in Integer) return Integer;
 
 end sys;
