@@ -76,6 +76,20 @@ package body sys is
       end if;
    end futex_unlock;
 
+   procedure fast_lock (f : access futex_t) is
+      procedure pthread_yield with Import;
+   begin
+      loop
+         exit when cmpxchg_32 (f.f2'Access, 0, 1) = 1;
+         pthread_yield;
+      end loop;
+   end fast_lock;
+
+   procedure fast_unlock (f : access futex_t) is
+   begin
+      if cmpxchg_32 (f.f2'Access, 1, 0) /= 0 then exit0 (-1); end if;
+   end fast_unlock;
+
    procedure pause34 is
       NR_pause : constant := 34;
    begin

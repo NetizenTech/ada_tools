@@ -23,6 +23,7 @@ is
 
    type futex_t is record
       f1 : aliased Atomic_32 := 1;
+      f2 : aliased Atomic_32 := 1;
    end record;
 
    type pid_t is new Integer;
@@ -36,6 +37,10 @@ is
    procedure futex_lock (f : access futex_t);
 
    procedure futex_unlock (f : access futex_t);
+
+   procedure fast_lock (f : access futex_t);
+
+   procedure fast_unlock (f : access futex_t);
 
    procedure pause34;
 
