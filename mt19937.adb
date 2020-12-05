@@ -69,14 +69,10 @@ package body MT19937 is
       x : constant Unsigned_32 := xadd_32 (M (I).mti'Access, 1);
    begin
       case x is
-         when 1 .. NN - 1 =>
-            return genrand64 (M (I).mt (UNN (x)));
-         when NN =>
-            return up_genrand64 (M, I);
-         when NI =>
-            return init_genrand64 (M, I);
-         when others =>
-            return 0;
+         when 1 .. NN - 1 => return genrand64 (M (I).mt (UNN (x)));
+         when NN          => return up_genrand64 (M, I);
+         when NI          => return init_genrand64 (M, I);
+         when others      => return 0;
       end case;
    end genrand64;
 

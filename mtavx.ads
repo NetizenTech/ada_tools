@@ -31,6 +31,6 @@ is
    H2 : constant Unsigned_64 := 16#71D6_7FFF_EDA6_0000#;
    H3 : constant Unsigned_64 := 16#FFF7_EEE0_0000_0000#;
 
-   function genrand64 (x : in Unsigned_64) return Unsigned_64;
+   function genrand64 (x : in Unsigned_64) return Unsigned_64 with No_Inline;
 
 end MTavx;

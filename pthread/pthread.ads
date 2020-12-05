@@ -22,9 +22,14 @@ package pthread with
    Pure
 is
    -- Definitions of constants scheduling interface.
+   -- SCHED_RR quantum: /proc/sys/kernel/sched_rr_timeslice_ms
    SCHED_OTHER    : constant := 0;  --  /usr/include/x86_64-linux-gnu/bits/sched.h:28
    SCHED_FIFO     : constant := 1;  --  /usr/include/x86_64-linux-gnu/bits/sched.h:29
    SCHED_RR       : constant := 2;  --  /usr/include/x86_64-linux-gnu/bits/sched.h:30
+
+   -- Scheduler inheritance.
+   PTHREAD_INHERIT_SCHED  : constant := 0;
+   PTHREAD_EXPLICIT_SCHED : constant := 1;
 
    -- Detach state.
    PTHREAD_CREATE_JOINABLE : constant := 0;
@@ -81,6 +86,20 @@ is
       stacksize : in Unsigned_64) return Integer  -- /usr/include/pthread.h:351
    with Import;
 
+   -- Thread created with attribute ATTR will be limited to run only on
+   --   the processors represented in CPUSET.
+   function pthread_attr_setaffinity_np
+     (attr       : access pthread_attr_t;
+      cpusetsize : in Unsigned_64 := (cpu_set_t'Size / 8);
+      cpuset     : access constant cpu_set_t) return Integer  -- /usr/include/pthread.h:372
+   with Import;
+
+   -- Set scheduling inheritance mode in *ATTR according to INHERIT.
+   function pthread_attr_setinheritsched
+     (attr    : access pthread_attr_t;
+      inherit : in Integer) return Integer  -- /usr/include/pthread.h:316
+   with Import;
+
    -- Set scheduling policy in *ATTR according to POLICY.
    function pthread_attr_setschedpolicy
      (attr   : access pthread_attr_t;
@@ -91,14 +110,6 @@ is
    function pthread_attr_setschedparam
      (attr  : access pthread_attr_t;
       param : access constant sched_param) return Integer  -- /usr/include/pthread.h:297
-   with Import;
-
-   -- Thread created with attribute ATTR will be limited to run only on
-   --   the processors represented in CPUSET.
-   function pthread_attr_setaffinity_np
-     (attr       : access pthread_attr_t;
-      cpusetsize : in Unsigned_64 := (cpu_set_t'Size / 8);
-      cpuset     : access constant cpu_set_t) return Integer  -- /usr/include/pthread.h:372
    with Import;
 
    -- Set detach state attribute.
@@ -140,6 +151,21 @@ is
      (thread     : in pthread_t;
       cpusetsize : in Unsigned_64 := (cpu_set_t'Size / 8);
       cpuset     : access constant cpu_set_t) return Integer -- /usr/include/pthread.h:450
+   with Import;
+
+   -- Functions for scheduling control.
+   -- Set the scheduling parameters for TARGET_THREAD according to POLICY
+   --   and *PARAM.
+   function pthread_setschedparam
+     (thread : in pthread_t;
+      policy : in Integer;
+      param  : access constant sched_param) return Integer  -- /usr/include/pthread.h:405
+   with Import;
+
+   -- Set the scheduling priority for TARGET_THREAD.
+   function pthread_setschedprio
+    (thread : in pthread_t;
+     prio   : in Integer) return Integer  -- /usr/include/pthread.h:416
    with Import;
 
    -- Indicate that the thread TH is never to be joined with PTHREAD_JOIN.

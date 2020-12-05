@@ -22,6 +22,6 @@ is
       Atomic_Components;
 
    -- Algorithm "xor128" from p. 5 Marsaglia, "Xorshift RNGs"
-   function xrand64 (x : access xs256s) return Unsigned_64;
+   function xrand64 (x : access xs256s) return Unsigned_64 with No_Inline;
 
 end xor128avx2;

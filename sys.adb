@@ -45,38 +45,50 @@ package body sys is
            Volatile => True);
    end exit0;
 
-   procedure futex (f : access Atomic_32; op : in Integer; val : in Unsigned_32) is
+   function futex (f : access Atomic_32; op : in Integer; val : in Unsigned_32) return Integer is
       NR_futex : constant := 202;
+      x : Integer;
    begin
       Asm (Template => "xorq %%r10, %%r10" & NL &
-                       "movq %0, %%rdi"    & NL &
-                       "movl %1, %%esi"    & NL &
-                       "movl %2, %%edx"    & NL &
-                       "movl %3, %%eax"    & NL &
-                       "syscall",
+                       "movq %1, %%rdi"    & NL &
+                       "movl %2, %%esi"    & NL &
+                       "movl %3, %%edx"    & NL &
+                       "movl %4, %%eax"    & NL &
+                       "syscall"           & NL &
+                       "movl %%eax, %0",
+           Outputs  => (Integer'Asm_Output ("=r", x)),
            Inputs   => (System.Address'Asm_Input ("r", f.all'Address),
                         Integer'Asm_Input ("r", op),
                         Unsigned_32'Asm_Input ("r", val),
                         Integer'Asm_Input ("n", NR_futex)),
            Volatile => True);
+      return x;
    end futex;
 
-   procedure futex_lock (f : access futex_t) is
+   procedure futex_lock (f : access lock_t) is
    begin
       loop
          exit when cmpxchg_32 (f.f1'Access, 0, 1) = 1;
-         futex (f.f1'Access, FUTEX_WAIT, 0);
+         case futex (f.f1'Access, FUTEX_WAIT, 0) is
+            when 0 | -11 => null;
+            when others  => exit0 (-1);
+         end case;
       end loop;
    end futex_lock;
 
-   procedure futex_unlock (f : access futex_t) is
+   procedure futex_unlock (f : access lock_t) is
    begin
-      if cmpxchg_32 (f.f1'Access, 1, 0) = 0 then
-         futex (f.f1'Access, FUTEX_WAKE, 1);
-      end if;
+      case cmpxchg_32 (f.f1'Access, 1, 0) is
+         when 0      =>
+            case futex (f.f1'Access, FUTEX_WAKE, 1) is
+               when 0 | 1  => null;
+               when others => exit0 (-1);
+            end case;
+         when others => exit0 (-1);
+      end case;
    end futex_unlock;
 
-   procedure fast_lock (f : access futex_t) is
+   procedure fast_lock (f : access lock_t) is
       procedure pthread_yield with Import;
    begin
       loop
@@ -85,9 +97,12 @@ package body sys is
       end loop;
    end fast_lock;
 
-   procedure fast_unlock (f : access futex_t) is
+   procedure fast_unlock (f : access lock_t) is
    begin
-      if cmpxchg_32 (f.f2'Access, 1, 0) /= 0 then exit0 (-1); end if;
+      case cmpxchg_32 (f.f2'Access, 1, 0) is
+         when 0      => null;
+         when others => exit0 (-1);
+      end case;
    end fast_unlock;
 
    procedure pause34 is

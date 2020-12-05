@@ -21,33 +21,33 @@ is
    FUTEX_WAIT : constant := 0;
    FUTEX_WAKE : constant := 1;
 
-   type futex_t is record
+   type lock_t is record
       f1 : aliased Atomic_32 := 1;
       f2 : aliased Atomic_32 := 1;
    end record;
 
    type pid_t is new Integer;
 
-   procedure write (x : in String);
+   procedure write (x : in String) with No_Inline;
 
-   procedure exit0 (s : in Integer := 0);
+   procedure exit0 (s : in Integer := 0) with No_Inline;
 
-   procedure futex (f : access Atomic_32; op : in Integer; val : in Unsigned_32);
+   function futex (f : access Atomic_32; op : in Integer; val : in Unsigned_32) return Integer with No_Inline;
 
-   procedure futex_lock (f : access futex_t);
+   procedure futex_lock (f : access lock_t) with No_Inline;
 
-   procedure futex_unlock (f : access futex_t);
+   procedure futex_unlock (f : access lock_t) with No_Inline;
 
-   procedure fast_lock (f : access futex_t);
+   procedure fast_lock (f : access lock_t) with No_Inline;
 
-   procedure fast_unlock (f : access futex_t);
+   procedure fast_unlock (f : access lock_t) with No_Inline;
 
-   procedure pause34;
+   procedure pause34 with No_Inline;
 
-   function getpid return pid_t;
+   function getpid return pid_t with No_Inline;
 
-   function gettid return pid_t;
+   function gettid return pid_t with No_Inline;
 
-   function tgkill (tgid : in pid_t; tid : in pid_t; sig : in Integer) return Integer;
+   function tgkill (tgid : in pid_t; tid : in pid_t; sig : in Integer) return Integer with No_Inline;
 
 end sys;

@@ -60,7 +60,7 @@ is
       mt   : aliased mt_array;             -- The array for the state vector
       mti  : aliased Atomic_32 := NI;      -- mti==NI means mt[NN] is not initialized
       seed : aliased Unsigned_64 := SD;    -- initial value
-      ftx  : aliased sys.futex_t;          -- futex
+      ftx  : aliased sys.lock_t;           -- Atomic_32 used by futex_lock and/or fast_lock
    end record;
 
    type mtx_array is array (UTHN) of aliased Matrix;
