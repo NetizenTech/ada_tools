@@ -34,6 +34,18 @@ package body sys is
            Volatile => True);
    end write;
 
+   procedure nanosleep (t : access constant timespec) is
+      NR_nanosleep : constant := 35;
+   begin
+      Asm (Template => "xorq %%rsi, %%rsi" & NL &
+                       "movq %0, %%rdi"    & NL &
+                       "movl %1, %%eax"    & NL &
+                       "syscall",
+           Inputs   => (System.Address'Asm_Input ("r", t.all'Address),
+                        Integer'Asm_Input ("n", NR_nanosleep)),
+           Volatile => True);
+   end nanosleep;
+
    procedure exit0 (s : in Integer := 0) is
       NR_exit : constant := 60;
    begin
@@ -104,6 +116,34 @@ package body sys is
          when others => exit0 (-1);
       end case;
    end fast_unlock;
+
+   procedure queue_lock (f : access lock_t) is
+      procedure pthread_yield with Import;
+      x : constant Unsigned_32 := xadd_32 (f.q1'Access, 2);
+   begin
+      loop
+         exit when cmpxchg_32 (f.f3'Access, 0, x) = x;
+         pthread_yield;
+      end loop;
+   end queue_lock;
+
+   procedure queue_lock (f : access lock_t; t : access constant timespec) is
+      x : constant Unsigned_32 := xadd_32 (f.q1'Access, 2);
+   begin
+      loop
+         exit when cmpxchg_32 (f.f3'Access, 0, x) = x;
+         nanosleep (t);
+      end loop;
+   end queue_lock;
+
+   procedure queue_unlock (f : access lock_t) is
+      x : constant Unsigned_32 := xadd_32p (f.q2'Access, 2);
+   begin
+      case cmpxchg_32 (f.f3'Access, x, 0) is
+         when 0      => null;
+         when others => exit0 (-1);
+      end case;
+   end queue_unlock;
 
    procedure pause34 is
       NR_pause : constant := 34;

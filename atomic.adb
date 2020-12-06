@@ -51,8 +51,16 @@ package body Atomic is
    end xadd_32;
 
    function xadd_32p (ptr : access Atomic_32; val : in Unsigned_32) return Unsigned_32 is
+      x : Unsigned_32;
    begin
-      return (xadd_32 (ptr, val) + val);
+      Asm (Template => "movl %1, %0"         & NL &
+                       "lock xaddl %1, (%2)" & NL &
+                       "addl %1, %0",
+           Outputs  => (Unsigned_32'Asm_Output ("=r", x)),
+           Inputs   => (Unsigned_32'Asm_Input ("r", val),
+                        System.Address'Asm_Input ("r", ptr.all'Address)),
+           Volatile => True);
+      return x;
    end xadd_32p;
 
    procedure dec_32 (ptr : access Atomic_32) is
