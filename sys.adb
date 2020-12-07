@@ -34,18 +34,6 @@ package body sys is
            Volatile => True);
    end write;
 
-   procedure nanosleep (t : access constant timespec) is
-      NR_nanosleep : constant := 35;
-   begin
-      Asm (Template => "xorq %%rsi, %%rsi" & NL &
-                       "movq %0, %%rdi"    & NL &
-                       "movl %1, %%eax"    & NL &
-                       "syscall",
-           Inputs   => (System.Address'Asm_Input ("r", t.all'Address),
-                        Integer'Asm_Input ("n", NR_nanosleep)),
-           Volatile => True);
-   end nanosleep;
-
    procedure exit0 (s : in Integer := 0) is
       NR_exit : constant := 60;
    begin
@@ -77,82 +65,65 @@ package body sys is
       return x;
    end futex;
 
-   procedure futex_lock (f : access lock_t) is
+   function futex_lock (f : access lock_t) return Integer is
    begin
       loop
          exit when cmpxchg_32 (f.f1'Access, 0, 1) = 1;
          case futex (f.f1'Access, FUTEX_WAIT, 0) is
             when 0 | -11 => null;
-            when others  => exit0 (-1);
+            when others  => return (-1);
          end case;
       end loop;
+      return 0;
    end futex_lock;
 
-   procedure futex_unlock (f : access lock_t) is
+   function futex_unlock (f : access lock_t) return Integer is
    begin
       case cmpxchg_32 (f.f1'Access, 1, 0) is
          when 0      =>
             case futex (f.f1'Access, FUTEX_WAKE, 1) is
-               when 0 | 1  => null;
-               when others => exit0 (-1);
+               when 0 | 1  => return 0;
+               when others => return (-1);
             end case;
-         when others => exit0 (-1);
+         when others => return (-1);
       end case;
    end futex_unlock;
 
    procedure fast_lock (f : access lock_t) is
-      procedure pthread_yield with Import;
+      x : constant Unsigned_32 := xadd_32 (f.q1'Access, 2);
    begin
       loop
-         exit when cmpxchg_32 (f.f2'Access, 0, 1) = 1;
-         pthread_yield;
+         exit when cmpxchg_32 (f.f2'Access, 0, x) = x;
+         sched_yield;
       end loop;
    end fast_lock;
 
-   procedure fast_unlock (f : access lock_t) is
+   function fast_unlock (f : access lock_t) return Integer is
+      x : constant Unsigned_32 := xadd_32p (f.q2'Access, 2);
    begin
-      case cmpxchg_32 (f.f2'Access, 1, 0) is
-         when 0      => null;
-         when others => exit0 (-1);
+      case cmpxchg_32 (f.f2'Access, x, 0) is
+         when 0      => return 0;
+         when others => return (-1);
       end case;
    end fast_unlock;
 
-   procedure queue_lock (f : access lock_t) is
-      procedure pthread_yield with Import;
-      x : constant Unsigned_32 := xadd_32 (f.q1'Access, 2);
+   procedure sched_yield is
+      NR_sched_yield : constant := 24;
    begin
-      loop
-         exit when cmpxchg_32 (f.f3'Access, 0, x) = x;
-         pthread_yield;
-      end loop;
-   end queue_lock;
+      Asm (Template => "movl %0, %%eax" & NL &
+                       "syscall",
+           Inputs   => (Integer'Asm_Input ("n", NR_sched_yield)),
+           Volatile => True);
+   end sched_yield;
 
-   procedure queue_lock (f : access lock_t; t : access constant timespec) is
-      x : constant Unsigned_32 := xadd_32 (f.q1'Access, 2);
-   begin
-      loop
-         exit when cmpxchg_32 (f.f3'Access, 0, x) = x;
-         nanosleep (t);
-      end loop;
-   end queue_lock;
-
-   procedure queue_unlock (f : access lock_t) is
-      x : constant Unsigned_32 := xadd_32p (f.q2'Access, 2);
-   begin
-      case cmpxchg_32 (f.f3'Access, x, 0) is
-         when 0      => null;
-         when others => exit0 (-1);
-      end case;
-   end queue_unlock;
-
-   procedure pause34 is
+   procedure pause is
       NR_pause : constant := 34;
    begin
       Asm (Template => "movl %0, %%eax" & NL &
                        "syscall",
            Inputs   => (Integer'Asm_Input ("n", NR_pause)),
            Volatile => True);
-   end pause34;
+   end pause;
 
    function getpid return pid_t is
       NR_getpid : constant := 39;

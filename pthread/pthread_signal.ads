@@ -68,6 +68,8 @@ is
    with Import;
 
    -- light-weight processes in the same thread group must share signals
+   -- kernel delivers a pending signal to a process only at the next switch from kernel
+   --    mode to user mode while executing that process
    SIG_ERR : constant := 16#FFFF_FFFF_FFFF_FFFF#;
 
    -- Set the handler for the signal SIG to HANDLER, returning the old
@@ -75,11 +77,6 @@ is
    function signal
      (sig     : in Integer;
       handler : in System.Address) return System.Address  -- /usr/include/signal.h:88
-   with Import;
-
-   -- Suspend the process until a signal arrives.
-   --   This always returns -1 and sets `errno' to EINTR.
-   procedure pause  -- /usr/include/unistd.h:469
    with Import;
 
 end pthread_signal;

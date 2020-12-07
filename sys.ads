@@ -21,15 +21,9 @@ is
    FUTEX_WAIT : constant := 0;
    FUTEX_WAKE : constant := 1;
 
-   type timespec is record
-      tv_sec  : aliased Unsigned_64 := 0;
-      tv_nsec : aliased Unsigned_64 := 0;
-   end record;
-
    type lock_t is record
       f1 : aliased Atomic_32 := 1;
       f2 : aliased Atomic_32 := 1;
-      f3 : aliased Atomic_32 := 1;
       q1 : aliased Atomic_32 := 1;
       q2 : aliased Atomic_32 := 1;
    end record;
@@ -38,27 +32,21 @@ is
 
    procedure write (x : in String) with No_Inline;
 
-   procedure nanosleep (t : access constant timespec) with No_Inline;
-
    procedure exit0 (s : in Integer := 0) with No_Inline;
 
    function futex (f : access Atomic_32; op : in Integer; val : in Unsigned_32) return Integer with No_Inline;
 
-   procedure futex_lock (f : access lock_t) with No_Inline;
+   function futex_lock (f : access lock_t) return Integer with No_Inline;
 
-   procedure futex_unlock (f : access lock_t) with No_Inline;
+   function futex_unlock (f : access lock_t) return Integer with No_Inline;
 
    procedure fast_lock (f : access lock_t) with No_Inline;
 
-   procedure fast_unlock (f : access lock_t) with No_Inline;
+   function fast_unlock (f : access lock_t) return Integer with No_Inline;
 
-   procedure queue_lock (f : access lock_t) with No_Inline;
+   procedure sched_yield with No_Inline;
 
-   procedure queue_lock (f : access lock_t; t : access constant timespec) with No_Inline;
-
-   procedure queue_unlock (f : access lock_t) with No_Inline;
-
-   procedure pause34 with No_Inline;
+   procedure pause with No_Inline;
 
    function getpid return pid_t with No_Inline;
 
