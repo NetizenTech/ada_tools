@@ -47,6 +47,11 @@ is
       Default_Value => 0,
       Atomic;
 
+   type Atomic_64 is mod 2 ** 64 with
+      Size          => 64,
+      Default_Value => 0,
+      Atomic;
+
    function xadd_32 (ptr : access Atomic_32; val : in Unsigned_32) return Unsigned_32 with No_Inline;
 
    function xadd_32p (ptr : access Atomic_32; val : in Unsigned_32) return Unsigned_32 with No_Inline;
@@ -57,10 +62,20 @@ is
 
    function cmpxchg_32 (ptr : access Atomic_32; xchg : in Unsigned_32; cmp : in Unsigned_32) return Unsigned_32 with No_Inline;
 
-   function load_32if8 (ptr : access Atomic_32; p8 : access Atomic_8; val : in Unsigned_8) return Unsigned_32 with No_Inline;
-
    function cmpxchg_8 (ptr : access Atomic_8; xchg : in Unsigned_8; cmp : in Unsigned_8) return Unsigned_8 with No_Inline;
 
    procedure store_8 (ptr : access Atomic_8; val : in Unsigned_8) with No_Inline;
+
+   function xadd_8 (ptr : access Atomic_8; val : in Unsigned_8) return Unsigned_8 with No_Inline;
+
+   function xadd_8p (ptr : access Atomic_8; val : in Unsigned_8) return Unsigned_8 with No_Inline;
+
+   function xadd_64 (ptr : access Atomic_64; val : in Unsigned_64) return Unsigned_64 with No_Inline;
+
+   function xadd_64p (ptr : access Atomic_64; val : in Unsigned_64) return Unsigned_64 with No_Inline;
+
+   procedure store_64 (ptr : access Atomic_64; val : in Unsigned_64) with No_Inline;
+
+   function cmpxchg_64 (ptr : access Atomic_64; xchg : in Unsigned_64; cmp : in Unsigned_64) return Unsigned_64 with No_Inline;
 
 end Atomic;

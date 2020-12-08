@@ -92,22 +92,6 @@ package body Atomic is
       return x;
    end cmpxchg_32;
 
-   function load_32if8 (ptr : access Atomic_32; p8 : access Atomic_8; val : in Unsigned_8) return Unsigned_32 is
-      x : Unsigned_32;
-      y : Unsigned_8;
-   begin
-      Asm (Template => "movl (%2), %0" & NL &
-                       "lfence"        & NL &
-                       "movb (%3), %1",
-           Outputs  => (Unsigned_32'Asm_Output ("=r", x),
-                        Unsigned_8'Asm_Output ("=r", y)),
-           Inputs   => (System.Address'Asm_Input ("r", ptr.all'Address),
-                        System.Address'Asm_Input ("r", p8.all'Address)),
-           Volatile => True);
-      if y = val then return x; end if;
-      return 0;
-   end load_32if8;
-
    function cmpxchg_8 (ptr : access Atomic_8; xchg : in Unsigned_8; cmp : in Unsigned_8) return Unsigned_8 is
       x : Unsigned_8;
    begin
@@ -129,5 +113,77 @@ package body Atomic is
                         System.Address'Asm_Input ("r", ptr.all'Address)),
            Volatile => True);
    end store_8;
+
+   function xadd_8 (ptr : access Atomic_8; val : in Unsigned_8) return Unsigned_8 is
+      x : Unsigned_8;
+   begin
+      Asm (Template => "lock xaddb %1, (%2)" & NL &
+                       "movb %1, %0",
+           Outputs  => (Unsigned_8'Asm_Output ("=r", x)),
+           Inputs   => (Unsigned_8'Asm_Input ("r", val),
+                        System.Address'Asm_Input ("r", ptr.all'Address)),
+           Volatile => True);
+      return x;
+   end xadd_8;
+
+   function xadd_8p (ptr : access Atomic_8; val : in Unsigned_8) return Unsigned_8 is
+      x : Unsigned_8;
+   begin
+      Asm (Template => "movb %1, %0"         & NL &
+                       "lock xaddb %1, (%2)" & NL &
+                       "addb %1, %0",
+           Outputs  => (Unsigned_8'Asm_Output ("=r", x)),
+           Inputs   => (Unsigned_8'Asm_Input ("r", val),
+                        System.Address'Asm_Input ("r", ptr.all'Address)),
+           Volatile => True);
+      return x;
+   end xadd_8p;
+
+   function xadd_64 (ptr : access Atomic_64; val : in Unsigned_64) return Unsigned_64 is
+      x : Unsigned_64;
+   begin
+      Asm (Template => "lock xaddq %1, (%2)" & NL &
+                       "movq %1, %0",
+           Outputs  => (Unsigned_64'Asm_Output ("=r", x)),
+           Inputs   => (Unsigned_64'Asm_Input ("r", val),
+                        System.Address'Asm_Input ("r", ptr.all'Address)),
+           Volatile => True);
+      return x;
+   end xadd_64;
+
+   function xadd_64p (ptr : access Atomic_64; val : in Unsigned_64) return Unsigned_64 is
+      x : Unsigned_64;
+   begin
+      Asm (Template => "movq %1, %0"         & NL &
+                       "lock xaddq %1, (%2)" & NL &
+                       "addq %1, %0",
+           Outputs  => (Unsigned_64'Asm_Output ("=r", x)),
+           Inputs   => (Unsigned_64'Asm_Input ("r", val),
+                        System.Address'Asm_Input ("r", ptr.all'Address)),
+           Volatile => True);
+      return x;
+   end xadd_64p;
+
+   procedure store_64 (ptr : access Atomic_64; val : in Unsigned_64) is
+   begin
+      Asm (Template => "lock xchgq (%1), %0",
+           Inputs   => (Unsigned_64'Asm_Input ("r", val),
+                        System.Address'Asm_Input ("r", ptr.all'Address)),
+           Volatile => True);
+   end store_64;
+
+   function cmpxchg_64 (ptr : access Atomic_64; xchg : in Unsigned_64; cmp : in Unsigned_64) return Unsigned_64 is
+      x : Unsigned_64;
+   begin
+      Asm (Template => "movq %1, %%rax"         & NL &
+                       "lock cmpxchgq %2, (%3)" & NL &
+                       "movq %%rax, %0",
+           Outputs  => (Unsigned_64'Asm_Output ("=r", x)),
+           Inputs   => (Unsigned_64'Asm_Input ("r", cmp),
+                        Unsigned_64'Asm_Input ("r", xchg),
+                        System.Address'Asm_Input ("r", ptr.all'Address)),
+           Volatile => True);
+      return x;
+   end cmpxchg_64;
 
 end Atomic;

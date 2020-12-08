@@ -21,14 +21,24 @@ is
    FUTEX_WAIT : constant := 0;
    FUTEX_WAKE : constant := 1;
 
-   type lock_t is record
-      f1 : aliased Atomic_32 := 1;
-      f2 : aliased Atomic_32 := 1;
-      q1 : aliased Atomic_32 := 1;
-      q2 : aliased Atomic_32 := 1;
-   end record;
+   SIGUSR1 : constant := 10;
+   SIGUSR2 : constant := 12;
 
    type pid_t is new Integer;
+
+   type tid_t is array (Unsigned_8) of aliased pid_t with
+      Default_Component_Value => pid_t'Last;
+
+   type lock_t is record
+      f1 : aliased Atomic_32 := 1;
+      f2 : aliased Atomic_64 := 1;
+      q1 : aliased Atomic_64 := 1;
+      q2 : aliased Atomic_64 := 1;
+      f3 : aliased Atomic_64 := 1;
+      q3 : aliased Atomic_64 := 1;
+      q4 : aliased Atomic_64 := 1;
+      n1 : aliased tid_t;
+   end record;
 
    procedure write (x : in String) with No_Inline;
 
@@ -43,6 +53,10 @@ is
    procedure fast_lock (f : access lock_t) with No_Inline;
 
    function fast_unlock (f : access lock_t) return Integer with No_Inline;
+
+   procedure sig_lock (f : access lock_t) with No_Inline;
+
+   function sig_unlock (f : access lock_t) return Integer with No_Inline;
 
    procedure sched_yield with No_Inline;
 
