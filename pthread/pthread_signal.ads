@@ -70,13 +70,26 @@ is
    -- light-weight processes in the same thread group must share signals
    -- kernel delivers a pending signal to a process only at the next switch from kernel
    --    mode to user mode while executing that process
-   SIG_ERR : constant := 16#FFFF_FFFF_FFFF_FFFF#;
+   -- Structure describing the action to be taken when a signal arrives.
+   -- without SA_SIGINFO flag
+   type sigaction_t is record
+      sa_handler  : System.Address;  -- /usr/include/x86_64-linux-gnu/bits/sigaction.h:38
+      sa_mask     : aliased sigset_t;  -- /usr/include/x86_64-linux-gnu/bits/sigaction.h:46
+      sa_flags    : aliased Integer := 0;  -- /usr/include/x86_64-linux-gnu/bits/sigaction.h:49
+      sa_restorer : System.Address := System.Null_Address;  -- /usr/include/x86_64-linux-gnu/bits/sigaction.h:52
+   end record;
 
-   -- Set the handler for the signal SIG to HANDLER, returning the old
-   --   handler, or SIG_ERR on error.
-   function signal
-     (sig     : in Integer;
-      handler : in System.Address) return System.Address  -- /usr/include/signal.h:88
+   -- Get and/or set the action for signal SIG.
+   function sigaction
+     (sig  : in Integer;
+      act  : access constant sigaction_t;
+      oact : access sigaction_t := null) return Integer  -- /usr/include/signal.h:240
+   with Import;
+
+   -- Change the set of blocked signals to SET,
+   --   wait until a signal arrives, and restore the set of blocked signals.
+   procedure sigsuspend
+     (set : access constant sigset_t)  -- /usr/include/signal.h:237
    with Import;
 
 end pthread_signal;

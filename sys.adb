@@ -109,20 +109,23 @@ package body sys is
 
    procedure sig_lock (f : access lock_t) is
       x : constant Unsigned_64 := xadd_64 (f.q3'Access, 1);
+      i : constant Unsigned_8 := Unsigned_8'Mod (x);
    begin
-      f.n1 (Unsigned_8'Mod (x)) := gettid;
+      f.n1 (i) := gettid;
       loop
          exit when cmpxchg_64 (f.f3'Access, 0, x) = x;
          pause;
       end loop;
+      f.n1 (i) := pid_t'Last;
    end sig_lock;
 
    function sig_unlock (f : access lock_t) return Integer is
       x : constant Unsigned_64 := xadd_64p (f.q4'Access, 1);
+      i : constant Unsigned_8 := Unsigned_8'Mod (x);
    begin
       case cmpxchg_64 (f.f3'Access, x, 0) is
          when 0      =>
-            case tgkill (getpid, f.n1 (Unsigned_8'Mod (x)), SIGUSR2) is
+            case tgkill (getpid, f.n1 (i), SIGUSR2) is
                when 0      => return 0;
                when -3     => return 0;
                when others => return (-1);
