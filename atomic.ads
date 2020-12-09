@@ -52,6 +52,13 @@ is
       Default_Value => 0,
       Atomic;
 
+   type args_16b is record
+      c1 : Unsigned_64 := 0;
+      c2 : Unsigned_64 := 0;
+      x1 : Unsigned_64 := 0;
+      x2 : Unsigned_64 := 0;
+   end record;
+
    function xadd_32 (ptr : access Atomic_32; val : in Unsigned_32) return Unsigned_32 with No_Inline;
 
    function xadd_32p (ptr : access Atomic_32; val : in Unsigned_32) return Unsigned_32 with No_Inline;
@@ -77,5 +84,7 @@ is
    procedure store_64 (ptr : access Atomic_64; val : in Unsigned_64) with No_Inline;
 
    function cmpxchg_64 (ptr : access Atomic_64; xchg : in Unsigned_64; cmp : in Unsigned_64) return Unsigned_64 with No_Inline;
+
+   function cmpxchg_16b (ptr : access Atomic_64; args : access args_16b) return Boolean with No_Inline;
 
 end Atomic;

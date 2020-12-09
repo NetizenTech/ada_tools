@@ -186,4 +186,23 @@ package body Atomic is
       return x;
    end cmpxchg_64;
 
+   function cmpxchg_16b (ptr : access Atomic_64; args : access args_16b) return Boolean is
+      x : Boolean;
+   begin
+      Asm (Template => "movq %1, %%rax"       & NL &
+                       "movq %2, %%rdx"       & NL &
+                       "movq %3, %%rbx"       & NL &
+                       "movq %4, %%rcx"       & NL &
+                       "lock cmpxchg16b (%5)" & NL &
+                       "sete %0",
+           Outputs  => (Boolean'Asm_Output ("=r", x)),
+           Inputs   => (Unsigned_64'Asm_Input ("m", args.c1),
+                        Unsigned_64'Asm_Input ("m", args.c2),
+                        Unsigned_64'Asm_Input ("m", args.x1),
+                        Unsigned_64'Asm_Input ("m", args.x2),
+                        System.Address'Asm_Input ("r", ptr.all'Address)),
+           Volatile => True);
+      return x;
+   end cmpxchg_16b;
+
 end Atomic;

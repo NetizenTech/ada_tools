@@ -127,7 +127,15 @@ package body sys is
          when 0      =>
             case tgkill (getpid, f.n1 (i), SIGUSR2) is
                when 0      => return 0;
-               when -3     => return 0;
+               when -3     =>
+                  declare
+                     a16 : aliased args_16b := (x, x, 1, 1);
+                  begin
+                     if cmpxchg_16b (f.f3'Access, a16'Access) then
+                        store_64 (f.q4'Access, 1);
+                     end if;
+                     return 0;
+                  end;
                when others => return (-1);
             end case;
          when others => return (-1);
