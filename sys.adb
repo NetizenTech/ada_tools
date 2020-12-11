@@ -68,7 +68,7 @@ package body sys is
    function futex_lock (f : access lock_t) return Integer is
    begin
       loop
-         exit when cmpxchg_32 (f.f1'Access, 0, 1) = 1;
+         exit when cmpxchg_32 (f.f1'Access, 0, 1);
          case futex (f.f1'Access, FUTEX_WAIT, 0) is
             when 0 | -11 => null;
             when others  => return (-1);
@@ -79,33 +79,48 @@ package body sys is
 
    function futex_unlock (f : access lock_t) return Integer is
    begin
-      case cmpxchg_32 (f.f1'Access, 1, 0) is
-         when 0      =>
-            case futex (f.f1'Access, FUTEX_WAKE, 1) is
-               when 0 | 1  => return 0;
-               when others => return (-1);
-            end case;
-         when others => return (-1);
-      end case;
+      if cmpxchg_32 (f.f1'Access, 1, 0) then
+         case futex (f.f1'Access, FUTEX_WAKE, 1) is
+            when 0 | 1  => return 0;
+            when others => return (-1);
+         end case;
+      end if;
+      return (-1);
    end futex_unlock;
 
    procedure fast_lock (f : access lock_t) is
-      x : constant Unsigned_64 := xadd_64 (f.q1'Access, 1);
    begin
       loop
-         exit when cmpxchg_64 (f.f2'Access, 0, x) = x;
+         exit when cmpxchg_32 (f.f4'Access, 0, 1);
          sched_yield;
       end loop;
    end fast_lock;
 
    function fast_unlock (f : access lock_t) return Integer is
+   begin
+      if cmpxchg_32 (f.f4'Access, 1, 0) then
+         return 0;
+      end if;
+      return (-1);
+   end fast_unlock;
+
+   procedure queue_lock (f : access lock_t) is
+      x : constant Unsigned_64 := xadd_64 (f.q1'Access, 1);
+   begin
+      loop
+         exit when cmpxchg_64 (f.f2'Access, 0, x);
+         sched_yield;
+      end loop;
+   end queue_lock;
+
+   function queue_unlock (f : access lock_t) return Integer is
       x : constant Unsigned_64 := xadd_64p (f.q2'Access, 1);
    begin
-      case cmpxchg_64 (f.f2'Access, x, 0) is
-         when 0      => return 0;
-         when others => return (-1);
-      end case;
-   end fast_unlock;
+      if cmpxchg_64 (f.f2'Access, x, 0) then
+         return 0;
+      end if;
+      return (-1);
+   end queue_unlock;
 
    procedure sig_lock (f : access lock_t) is
       x : constant Unsigned_64 := xadd_64 (f.q3'Access, 1);
@@ -113,7 +128,7 @@ package body sys is
    begin
       f.n1 (i) := gettid;
       loop
-         exit when cmpxchg_64 (f.f3'Access, 0, x) = x;
+         exit when cmpxchg_64 (f.f3'Access, 0, x);
          pause;
       end loop;
       f.n1 (i) := pid_t'Last;
@@ -123,23 +138,22 @@ package body sys is
       x : constant Unsigned_64 := xadd_64p (f.q4'Access, 1);
       i : constant Unsigned_8 := Unsigned_8'Mod (x);
    begin
-      case cmpxchg_64 (f.f3'Access, x, 0) is
-         when 0      =>
-            case tgkill (getpid, f.n1 (i), SIGUSR2) is
-               when 0      => return 0;
-               when -3     =>
-                  declare
-                     a16 : aliased args_16b := (x, x, 1, 1);
-                  begin
-                     if cmpxchg_16b (f.f3'Access, a16'Access) then
-                        store_64 (f.q4'Access, 1);
-                     end if;
-                     return 0;
-                  end;
-               when others => return (-1);
-            end case;
-         when others => return (-1);
-      end case;
+      if cmpxchg_64 (f.f3'Access, x, 0) then
+         case tgkill (getpid, f.n1 (i), SIGUSR2) is
+            when 0      => return 0;
+            when -3     =>
+               declare
+                  a16 : aliased args_16b := (x, x, 1, 1);
+               begin
+                  if cmpxchg_16b (f.f3'Access, a16'Access) then
+                     xchg_64 (f.q4'Access, 1);
+                  end if;
+               end;
+               return 0;
+            when others => return (-1);
+         end case;
+      end if;
+      return (-1);
    end sig_unlock;
 
    procedure sched_yield is

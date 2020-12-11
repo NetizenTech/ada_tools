@@ -17,7 +17,7 @@ package rdrand with
    No_Elaboration_Code_All,
    Pure
 is
-   -- hardware-generated random value -> RDRAND instruction = true
+   -- hardware-generated random value
    function rand64 return Unsigned_64 with No_Inline;
 
 end rdrand;

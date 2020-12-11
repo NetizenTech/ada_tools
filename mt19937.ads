@@ -21,8 +21,6 @@
 --     uniform pseudorandom number generator''
 --   ACM Transactions on Modeling and
 --   Computer Simulation 8. (Jan. 1998) 3--30.
-
--- Any feedback is very welcome.
 pragma Ada_2020;
 
 with Atomic;     use Atomic;

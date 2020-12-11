@@ -67,9 +67,6 @@ is
       value    : in sigval_t) return Integer  -- /usr/include/x86_64-linux-gnu/bits/sigthread.h:40
    with Import;
 
-   -- light-weight processes in the same thread group must share signals
-   -- kernel delivers a pending signal to a process only at the next switch from kernel
-   --    mode to user mode while executing that process
    -- Structure describing the action to be taken when a signal arrives.
    -- without SA_SIGINFO flag
    type sigaction_t is record

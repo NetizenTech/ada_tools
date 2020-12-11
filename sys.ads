@@ -37,6 +37,7 @@ is
       q3 : aliased Atomic_64 := 1;
       q4 : aliased Atomic_64 := 1;
       f1 : aliased Atomic_32 := 1;
+      f4 : aliased Atomic_32 := 1;
       n1 : aliased tid_t;
    end record;
 
@@ -50,10 +51,17 @@ is
 
    function futex_unlock (f : access lock_t) return Integer with No_Inline;
 
+   -- short random lock
    procedure fast_lock (f : access lock_t) with No_Inline;
 
    function fast_unlock (f : access lock_t) return Integer with No_Inline;
 
+   -- short enqueued lock
+   procedure queue_lock (f : access lock_t) with No_Inline;
+
+   function queue_unlock (f : access lock_t) return Integer with No_Inline;
+
+   -- long enqueued lock
    procedure sig_lock (f : access lock_t) with No_Inline;
 
    function sig_unlock (f : access lock_t) return Integer with No_Inline;

@@ -21,8 +21,6 @@
 --     uniform pseudorandom number generator''
 --   ACM Transactions on Modeling and
 --   Computer Simulation 8. (Jan. 1998) 3--30.
-
--- Any feedback is very welcome.
 pragma Ada_2020;
 
 with MTavx; use MTavx;
@@ -60,7 +58,7 @@ package body MT19937 is
       x          := (M (NN - 1) and UM) or (M (0) and LM);
       M (NN - 1) := M (MM - 1) xor Shift_Right (x, 1) xor MATRIX_A (x and 1);
 
-      store_32 (MX (J).mti'Access, 1);
+      xchg_32 (MX (J).mti'Access, 1);
       return genrand64 (M (0));
    end up_genrand64;
 

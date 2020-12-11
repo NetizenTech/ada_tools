@@ -9,26 +9,6 @@
 -- SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
 -- WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 -- USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
--- References:
---    April 2020 AMD64 Architecture Programmer's Manual
-
--- all memory values are initialized to zero:
-
--- 1.
--- Processor 0             Processor 1
--- Store A <- 1            Store B <- 1
--- Load B                  Load A
-
--- All combinations of values (00, 01, 10, and 11) may be observed by Processors 0 and 1
-
--- 2.
--- Processor 0             Processor 1
--- Store A <- 1            Store B <- 1
--- MFENCE                  MFENCE
--- Load B                  Load A
-
--- Load A and Load B cannot both read 0
 pragma Ada_2020;
 
 with Interfaces; use Interfaces;
@@ -52,6 +32,13 @@ is
       Default_Value => 0,
       Atomic;
 
+   type args_8b is record
+      c1 : Unsigned_32 := 0;
+      c2 : Unsigned_32 := 0;
+      x1 : Unsigned_32 := 0;
+      x2 : Unsigned_32 := 0;
+   end record;
+
    type args_16b is record
       c1 : Unsigned_64 := 0;
       c2 : Unsigned_64 := 0;
@@ -59,32 +46,37 @@ is
       x2 : Unsigned_64 := 0;
    end record;
 
-   function xadd_32 (ptr : access Atomic_32; val : in Unsigned_32) return Unsigned_32 with No_Inline;
-
-   function xadd_32p (ptr : access Atomic_32; val : in Unsigned_32) return Unsigned_32 with No_Inline;
-
-   procedure dec_32 (ptr : access Atomic_32) with No_Inline;
-
-   procedure store_32 (ptr : access Atomic_32; val : in Unsigned_32) with No_Inline;
-
-   function cmpxchg_32 (ptr : access Atomic_32; xchg : in Unsigned_32; cmp : in Unsigned_32) return Unsigned_32 with No_Inline;
-
-   function cmpxchg_8 (ptr : access Atomic_8; xchg : in Unsigned_8; cmp : in Unsigned_8) return Unsigned_8 with No_Inline;
-
-   procedure store_8 (ptr : access Atomic_8; val : in Unsigned_8) with No_Inline;
+   -- Atomic_8
+   procedure xchg_8 (ptr : access Atomic_8; val : in Unsigned_8) with No_Inline;
 
    function xadd_8 (ptr : access Atomic_8; val : in Unsigned_8) return Unsigned_8 with No_Inline;
 
    function xadd_8p (ptr : access Atomic_8; val : in Unsigned_8) return Unsigned_8 with No_Inline;
 
+   function cmpxchg_8 (ptr : access Atomic_8; xchg : in Unsigned_8; cmp : in Unsigned_8) return Boolean with No_Inline;
+
+   -- Atomic_32
+   procedure xchg_32 (ptr : access Atomic_32; val : in Unsigned_32) with No_Inline;
+
+   function xadd_32 (ptr : access Atomic_32; val : in Unsigned_32) return Unsigned_32 with No_Inline;
+
+   function xadd_32p (ptr : access Atomic_32; val : in Unsigned_32) return Unsigned_32 with No_Inline;
+
+   function cmpxchg_32 (ptr : access Atomic_32; xchg : in Unsigned_32; cmp : in Unsigned_32) return Boolean with No_Inline;
+
+   -- Atomic_64
+   procedure xchg_64 (ptr : access Atomic_64; val : in Unsigned_64) with No_Inline;
+
    function xadd_64 (ptr : access Atomic_64; val : in Unsigned_64) return Unsigned_64 with No_Inline;
 
    function xadd_64p (ptr : access Atomic_64; val : in Unsigned_64) return Unsigned_64 with No_Inline;
 
-   procedure store_64 (ptr : access Atomic_64; val : in Unsigned_64) with No_Inline;
+   function cmpxchg_64 (ptr : access Atomic_64; xchg : in Unsigned_64; cmp : in Unsigned_64) return Boolean with No_Inline;
 
-   function cmpxchg_64 (ptr : access Atomic_64; xchg : in Unsigned_64; cmp : in Unsigned_64) return Unsigned_64 with No_Inline;
+   -- Atomic 8b
+   function cmpxchg_8b (ptr : access Atomic_32; args : access args_8b) return Boolean with No_Inline;
 
+   -- Atomic 16b
    function cmpxchg_16b (ptr : access Atomic_64; args : access args_16b) return Boolean with No_Inline;
 
 end Atomic;
