@@ -32,14 +32,24 @@ is
       Default_Value => 0,
       Atomic;
 
-   type args_8b is record
+   type ptr8b is limited record
+      v1 : aliased Atomic_32 := 0;
+      v2 : aliased Atomic_32 := 0;
+   end record with Alignment => 8;
+
+   type args_8b is limited record
       c1 : Unsigned_32 := 0;
       c2 : Unsigned_32 := 0;
       x1 : Unsigned_32 := 0;
       x2 : Unsigned_32 := 0;
    end record;
 
-   type args_16b is record
+   type ptr16b is limited record
+      v1 : aliased Atomic_64 := 0;
+      v2 : aliased Atomic_64 := 0;
+   end record with Alignment => 16;
+
+   type args_16b is limited record
       c1 : Unsigned_64 := 0;
       c2 : Unsigned_64 := 0;
       x1 : Unsigned_64 := 0;
@@ -74,9 +84,9 @@ is
    function cmpxchg_64 (ptr : access Atomic_64; xchg : in Unsigned_64; cmp : in Unsigned_64) return Boolean with No_Inline;
 
    -- Atomic 8b
-   function cmpxchg_8b (ptr : access Atomic_32; args : access args_8b) return Boolean with No_Inline;
+   function cmpxchg_8b (ptr : access ptr8b; args : access constant args_8b) return Boolean with No_Inline;
 
    -- Atomic 16b
-   function cmpxchg_16b (ptr : access Atomic_64; args : access args_16b) return Boolean with No_Inline;
+   function cmpxchg_16b (ptr : access ptr16b; args : access constant args_16b) return Boolean with No_Inline;
 
 end Atomic;

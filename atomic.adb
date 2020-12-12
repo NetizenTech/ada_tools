@@ -163,7 +163,7 @@ package body Atomic is
    end cmpxchg_64;
 
    -- Atomic 8b
-   function cmpxchg_8b (ptr : access Atomic_32; args : access args_8b) return Boolean is
+   function cmpxchg_8b (ptr : access ptr8b; args : access constant args_8b) return Boolean is
       x : Boolean;
    begin
       Asm (Template => "movl %1, %%eax"       & NL &
@@ -183,7 +183,7 @@ package body Atomic is
    end cmpxchg_8b;
 
    -- Atomic 16b
-   function cmpxchg_16b (ptr : access Atomic_64; args : access args_16b) return Boolean is
+   function cmpxchg_16b (ptr : access ptr16b; args : access constant args_16b) return Boolean is
       x : Boolean;
    begin
       Asm (Template => "movq %1, %%rax"       & NL &
