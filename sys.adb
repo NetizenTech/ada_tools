@@ -43,6 +43,29 @@ package body sys is
            Volatile => True);
    end sched_yield;
 
+   function sched_setaffinity
+     (pid        : in pid_t;
+      cpusetsize : in Unsigned_64 := (cpu_set_t'Size / 8);
+      cpuset     : access constant cpu_set_t) return Integer
+   is
+      NR_sched_setaffinity : constant := 203;
+      x : Integer;
+   begin
+      Asm (Template => "movl %1, %%edi" & NL &
+                       "movq %2, %%rsi" & NL &
+                       "movq %3, %%rdx" & NL &
+                       "movl %4, %%eax" & NL &
+                       "syscall"        & NL &
+                       "movl %%eax, %0",
+           Outputs  => (Integer'Asm_Output ("=r", x)),
+           Inputs   => (pid_t'Asm_Input ("r", pid),
+                        Unsigned_64'Asm_Input ("r", cpusetsize),
+                        System.Address'Asm_Input ("r", cpuset.all'Address),
+                        Integer'Asm_Input ("n", NR_sched_setaffinity)),
+           Volatile => True);
+      return x;
+   end sched_setaffinity;
+
    procedure pause is
       NR_pause : constant := 34;
    begin

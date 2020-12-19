@@ -12,6 +12,7 @@
 pragma Ada_2020;
 
 with System.Machine_Code; use System.Machine_Code;
+with sys;                 use sys;
 
 package body mutex is
 
@@ -103,7 +104,7 @@ package body mutex is
       i : constant Unsigned_8 := Unsigned_8'Mod (x);
    begin
       if cmpxchg_64 (f.f2.fq.v1'Access, x, 0) then
-         case tgkill (getpid, f.n2 (i), SIGUSR2) is
+         case tgkill (getpid, f.n2 (i), SIG_WAKE) is
             when 0      => return 0;
             when -3     =>
                declare

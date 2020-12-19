@@ -16,17 +16,12 @@ pragma Ada_2020;
 
 with System;
 with Interfaces; use Interfaces;
+with sys_t;      use sys_t;
 
 package pthread with
    No_Elaboration_Code_All,
    Pure
 is
-   -- Definitions of constants scheduling interface.
-   -- SCHED_RR quantum: /proc/sys/kernel/sched_rr_timeslice_ms
-   SCHED_OTHER    : constant := 0;  --  /usr/include/x86_64-linux-gnu/bits/sched.h:28
-   SCHED_FIFO     : constant := 1;  --  /usr/include/x86_64-linux-gnu/bits/sched.h:29
-   SCHED_RR       : constant := 2;  --  /usr/include/x86_64-linux-gnu/bits/sched.h:30
-
    -- Scheduler inheritance.
    PTHREAD_INHERIT_SCHED  : constant := 0;
    PTHREAD_EXPLICIT_SCHED : constant := 1;
@@ -35,8 +30,8 @@ is
    PTHREAD_CREATE_JOINABLE : constant := 0;
    PTHREAD_CREATE_DETACHED : constant := 1;
 
-   -- Size definition for CPU sets.
-   CPU_SETSIZE : constant := 1_024;  -- /usr/include/x86_64-linux-gnu/bits/cpu-set.h
+   -- Thread identifiers.
+   type pthread_t is new Unsigned_64;  -- /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:27
 
    -- Data structure of thread attribute *ATTR
    type anon1032_array1034 is array (0 .. 55) of aliased Unsigned_8 with
@@ -50,25 +45,6 @@ is
       end case;
    end record
    with Unchecked_Union;  -- /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:56
-
-   -- Linux provides 99 realtime priority levels, numbered 1 (lowest) to 99 (highest).
-   subtype Sched_Prio is Integer range 1 .. 99;
-
-   -- Data structure to describe a process' schedulability.
-   type sched_param is record
-      sched_priority : aliased Sched_Prio;  -- /usr/include/x86_64-linux-gnu/bits/types/struct_sched_param.h:25
-   end record;  -- /usr/include/x86_64-linux-gnu/bits/types/struct_sched_param.h:23
-
-   -- Size definition for CPU sets.
-   -- Type for array elements in 'cpu_set_t'.
-   type cpu_mask is new Unsigned_64;  -- /usr/include/x86_64-linux-gnu/bits/cpu-set.h:32
-
-   -- Data structure to describe CPU mask.
-   type cpu_set_t_array876 is array (0 .. ((CPU_SETSIZE / cpu_mask'Size) - 1)) of aliased cpu_mask with
-      Default_Component_Value => 0;
-   type cpu_set_t is record
-      bits : aliased cpu_set_t_array876;  -- /usr/include/x86_64-linux-gnu/bits/cpu-set.h:41
-   end record;  -- /usr/include/x86_64-linux-gnu/bits/cpu-set.h:42
 
    -- Thread attribute handling.
    -- Initialize thread attribute *ATTR with default attributes
@@ -122,9 +98,6 @@ is
    function pthread_setattr_default_np
      (attr : access constant pthread_attr_t) return Integer  -- /usr/include/pthread.h:390
    with Import;
-
-   -- Thread identifiers.  The structure of the attribute type is not exposed on purpose.
-   type pthread_t is new Unsigned_64;  -- /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:27
 
    -- Functions for handling initialization.
    -- Create a new thread, starting with execution of START-ROUTINE

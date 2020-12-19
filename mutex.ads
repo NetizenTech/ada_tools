@@ -13,7 +13,7 @@ pragma Ada_2020;
 
 with Atomic;     use Atomic;
 with Interfaces; use Interfaces;
-with sys;        use sys;
+with sys_t;      use sys_t;
 
 package mutex with
    No_Elaboration_Code_All,
@@ -22,8 +22,7 @@ is
    FUTEX_WAIT : constant := 0;
    FUTEX_WAKE : constant := 1;
 
-   SIGUSR1 : constant := 10;
-   SIGUSR2 : constant := 12;
+   SIG_WAKE : constant := SIGRTMAX;
 
    type tid_t is array (Unsigned_8) of aliased pid_t with
       Default_Component_Value => pid_t'Last;

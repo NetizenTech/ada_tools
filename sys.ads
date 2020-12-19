@@ -13,16 +13,21 @@ pragma Ada_2020;
 
 with Atomic;     use Atomic;
 with Interfaces; use Interfaces;
+with sys_t;      use sys_t;
 
 package sys with
    No_Elaboration_Code_All,
    Pure
 is
-   type pid_t is new Integer;
 
    procedure write (x : in String) with No_Inline;
 
    procedure sched_yield with No_Inline;
+
+   function sched_setaffinity
+     (pid        : in pid_t;  -- gettid for threaded programs.
+      cpusetsize : in Unsigned_64 := (cpu_set_t'Size / 8);
+      cpuset     : access constant cpu_set_t) return Integer with No_Inline;
 
    procedure pause with No_Inline;
 
