@@ -1,4 +1,4 @@
--- Ada-program for random 64-bit hardware-generated value. Coded by Wojciech Lawren.
+-- Ada interface for RNG (Cryptographic Co-Processor). Coded by Wojciech Lawren.
 
 -- Copyright (C) 2020, Wojciech Lawren, All rights reserved.
 
@@ -21,10 +21,17 @@ package rdrand with
    No_Elaboration_Code_All,
    Pure
 is
-   -- hardware-generated random value
+
    function rand64 return Unsigned_64 with No_Inline;
 
-   -- hardware-generated random value
-   function sec_rand64 return Unsigned_64 with No_Inline;
+   function rand32 return Unsigned_32 with No_Inline;
+
+   function rand16 return Unsigned_16 with No_Inline;
+
+   function seed64 return Unsigned_64 with No_Inline;
+
+   function seed32 return Unsigned_32 with No_Inline;
+
+   function seed16 return Unsigned_16 with No_Inline;
 
 end rdrand;

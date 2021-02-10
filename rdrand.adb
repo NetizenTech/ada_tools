@@ -1,4 +1,4 @@
--- Ada-program for random 64-bit hardware-generated value x86_64. Coded by Wojciech Lawren.
+-- Ada interface for RNG (Cryptographic Co-Processor). Coded by Wojciech Lawren.
 
 -- Copyright (C) 2020, Wojciech Lawren, All rights reserved.
 
@@ -19,32 +19,82 @@ with System.Machine_Code; use System.Machine_Code;
 
 package body rdrand is
 
+   LP : constant := 10;
    NL : constant String := ASCII.LF & ASCII.HT;
 
-   -- hardware-generated random value
+   RAND : constant String := "mov %1, %%ecx" & NL &
+                             "1:"            & NL &
+                                "rdrand %0"  & NL &
+                                "jc 2f"      & NL &
+                                "loop 1b"    & NL &
+                                "xor %0, %0" & NL &
+                             "2:";
+   SEED : constant String := "mov %1, %%ecx" & NL &
+                             "1:"            & NL &
+                                "rdseed %0"  & NL &
+                                "jc 2f"      & NL &
+                                "loop 1b"    & NL &
+                                "xor %0, %0" & NL &
+                             "2:";
+
    function rand64 return Unsigned_64 is
-      r : Unsigned_64 := 0;
+      r : Unsigned_64;
    begin
-      Asm (Template => "rdrand %0",
-            Outputs  => (Unsigned_64'Asm_Output ("=r", r)),
-            Volatile => True);
+      Asm (Template => RAND,
+           Outputs  => (Unsigned_64'Asm_Output ("=r", r)),
+           Inputs   => (Unsigned_32'Asm_Input ("n", LP)),
+           Volatile => True);
       return r;
    end rand64;
 
-   -- hardware-generated random value
-   function sec_rand64 return Unsigned_64 is
-      r : Unsigned_64;
+   function rand32 return Unsigned_32 is
+      r : Unsigned_32;
    begin
-      Asm (Template => "movl $10, %%ecx"      & NL &
-                       "1:"                   & NL &
-                           "rdrand %0"        & NL &
-                           "jc 2f"            & NL &
-                           "loop 1b"          & NL &
-                           "cmovnc %%rcx, %0" & NL &
-                       "2:",
-           Outputs  => (Unsigned_64'Asm_Output ("=r", r)),
+      Asm (Template => RAND,
+           Outputs  => (Unsigned_32'Asm_Output ("=r", r)),
+           Inputs   => (Unsigned_32'Asm_Input ("n", LP)),
            Volatile => True);
       return r;
-   end sec_rand64;
+   end rand32;
+
+   function rand16 return Unsigned_16 is
+      r : Unsigned_16;
+   begin
+      Asm (Template => RAND,
+           Outputs  => (Unsigned_16'Asm_Output ("=r", r)),
+           Inputs   => (Unsigned_32'Asm_Input ("n", LP)),
+           Volatile => True);
+      return r;
+   end rand16;
+
+   function seed64 return Unsigned_64 is
+      r : Unsigned_64;
+   begin
+      Asm (Template => SEED,
+           Outputs  => (Unsigned_64'Asm_Output ("=r", r)),
+           Inputs   => (Unsigned_32'Asm_Input ("n", LP)),
+           Volatile => True);
+      return r;
+   end seed64;
+
+   function seed32 return Unsigned_32 is
+      r : Unsigned_32;
+   begin
+      Asm (Template => SEED,
+           Outputs  => (Unsigned_32'Asm_Output ("=r", r)),
+           Inputs   => (Unsigned_32'Asm_Input ("n", LP)),
+           Volatile => True);
+      return r;
+   end seed32;
+
+   function seed16 return Unsigned_16 is
+      r : Unsigned_16;
+   begin
+      Asm (Template => SEED,
+           Outputs  => (Unsigned_16'Asm_Output ("=r", r)),
+           Inputs   => (Unsigned_32'Asm_Input ("n", LP)),
+           Volatile => True);
+      return r;
+   end seed16;
 
 end rdrand;
